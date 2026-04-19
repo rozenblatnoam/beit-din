@@ -1,0 +1,185 @@
+.stepBar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 0.5px solid var(--border);
+}
+
+.stepItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-left: 0.5px solid var(--border);
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.stepItem:last-child { border-left: none; }
+
+.stepActive {
+  background: var(--navy);
+  color: var(--gold-light);
+  font-weight: 700;
+}
+
+.stepDone {
+  background: #d1fae5;
+  color: #065f46;
+  cursor: pointer;
+}
+
+.stepNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stepActive .stepNum { background: var(--gold-mid); color: var(--navy); }
+.stepDone .stepNum { background: #065f46; color: white; }
+
+.formCard { padding: 1.75rem; margin-bottom: 1rem; }
+
+.formTitle {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.uploadArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 10px;
+}
+
+.uploadArea:hover {
+  border-color: var(--gold-mid);
+  background: rgba(212,175,55,0.04);
+}
+
+.uploadText {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.uploadSub { font-size: 12px; color: var(--text-muted); }
+
+.fileList {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.summarySection {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.summaryLabel { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.summaryValue { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+
+.feeBox {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.feeRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 5px 0;
+  color: var(--text-muted);
+}
+
+.feeTotal {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-top: 0.5px solid var(--border);
+  margin-top: 8px;
+  padding-top: 10px;
+}
+
+.agreeRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.agreeRow input { margin-top: 3px; accent-color: var(--gold-mid); }
+
+.formActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.successIcon {
+  color: var(--gold-mid);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+  .formGrid { grid-template-columns: 1fr; }
+  .summaryGrid { grid-template-columns: 1fr; }
+  .stepItem span { display: none; }
+  .stepBar { gap: 4px; }
+}

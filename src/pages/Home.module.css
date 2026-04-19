@@ -1,0 +1,199 @@
+.homePage { min-height: 100vh; }
+
+.hero {
+  background: var(--navy);
+  padding: 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroInner {
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  animation: fadeIn 0.5s ease;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212,175,55,0.15);
+  color: var(--gold-light);
+  border: 1px solid rgba(212,175,55,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.5px;
+}
+
+.heroTitle {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.heroTitle span { color: var(--gold-mid); }
+
+.heroDesc {
+  font-size: 16px;
+  color: #94a3b8;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+  max-width: 580px;
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.heroDecor {
+  position: absolute;
+  left: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 240px;
+  opacity: 0.03;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.statsBar {
+  background: var(--navy-mid);
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  border-bottom: 3px solid var(--gold-mid);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 3rem;
+  border-left: 1px solid rgba(255,255,255,0.08);
+}
+.statItem:last-child { border-left: none; }
+
+.statValue {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold-mid);
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+
+.serviceCard {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.4s ease both;
+}
+
+.serviceCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 0%;
+  background: var(--gold-mid);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  transition: height 0.25s ease;
+}
+
+.serviceCard:hover {
+  border-color: var(--gold-mid);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.serviceCard:hover::before { height: 100%; }
+
+.svcIconWrap {
+  width: 52px;
+  height: 52px;
+  background: var(--navy-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.serviceCard:hover .svcIconWrap {
+  background: linear-gradient(135deg, var(--gold-mid), var(--gold-dark));
+  color: white;
+}
+
+.svcTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.svcDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 2rem;
+}
+
+.infoCard {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.infoCard strong { color: var(--text-primary); font-size: 13px; }
+
+.infoIcon { font-size: 22px; flex-shrink: 0; }
+
+@media (max-width: 768px) {
+  .heroTitle { font-size: 28px; }
+  .statsBar { flex-wrap: wrap; }
+  .statItem { padding: 1rem 1.5rem; border-left: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .infoRow { grid-template-columns: 1fr 1fr; }
+  .heroDecor { display: none; }
+}
