@@ -9,6 +9,17 @@ export const mockUser = {
   phone: '050-1234567',
 };
 
+// דיינים עם קוד כניסה אישי
+export const mockDayans = [
+  { id: 'd1', name: 'הרב אברהם כהן',    code: '1111', short: 'הרב כהן',    specialty: 'ממונות ונזיקין',     avatar: '⚖️' },
+  { id: 'd2', name: 'הרב משה לוי',      code: '2222', short: 'הרב לוי',    specialty: 'שותפויות ועסקים',   avatar: '📜' },
+  { id: 'd3', name: 'הרב יעקב גולדברג', code: '3333', short: 'הרב גולדברג', specialty: 'ירושות ונדל"ן',    avatar: '🏛️' },
+  { id: 'd4', name: 'הרב דוד ברקוביץ',  code: '4444', short: 'הרב ברקוביץ', specialty: 'חוזים ושכירות',    avatar: '📋' },
+];
+
+// Admin code
+export const ADMIN_CODE = '9999';
+
 export const mockCases = [
   {
     id: '2024-118',
@@ -16,6 +27,7 @@ export const mockCases = [
     opened: '12.01.2024',
     status: 'open',
     statusLabel: 'פעיל',
+    dayanId: 'd1',
     dayan: 'הרב כהן',
     amount: '₪85,000',
     nextHearing: '15.04.2025',
@@ -27,6 +39,7 @@ export const mockCases = [
     opened: '05.03.2024',
     status: 'pending',
     statusLabel: 'ממתין לתגובה',
+    dayanId: 'd2',
     dayan: 'הרב לוי',
     amount: '₪42,000',
     nextHearing: null,
@@ -38,6 +51,7 @@ export const mockCases = [
     opened: '20.11.2023',
     status: 'docs',
     statusLabel: 'השלמת מסמכים',
+    dayanId: 'd3',
     dayan: 'הרב גולדברג',
     amount: '₪210,000',
     nextHearing: null,
@@ -49,11 +63,51 @@ export const mockCases = [
     opened: '08.06.2022',
     status: 'closed',
     statusLabel: 'נסגר',
+    dayanId: 'd1',
     dayan: 'הרב כהן',
     amount: '₪18,000',
     nextHearing: null,
     docs: 4,
   },
+  {
+    id: '2025-001',
+    subject: 'סכסוך חוזה קבלן',
+    opened: '02.01.2025',
+    status: 'open',
+    statusLabel: 'פעיל',
+    dayanId: null,
+    dayan: null,
+    amount: '₪67,000',
+    nextHearing: null,
+    docs: 2,
+  },
+  {
+    id: '2025-012',
+    subject: 'תביעת חוב — הלוואה',
+    opened: '14.02.2025',
+    status: 'pending',
+    statusLabel: 'ממתין לתגובה',
+    dayanId: null,
+    dayan: null,
+    amount: '₪23,500',
+    nextHearing: null,
+    docs: 1,
+  },
+];
+
+// זמינות דיינים — ימים בשבוע (0=ראשון, 1=שני, ...)
+export const defaultAvailability = {
+  d1: { days: [0, 1, 3], timeStart: '09:00', timeEnd: '17:00', notes: '' },
+  d2: { days: [1, 2, 4], timeStart: '10:00', timeEnd: '16:00', notes: '' },
+  d3: { days: [0, 2, 3, 4], timeStart: '08:00', timeEnd: '14:00', notes: '' },
+  d4: { days: [1, 3], timeStart: '12:00', timeEnd: '19:00', notes: '' },
+};
+
+// שיבוצים: { caseId, dayanId, date, time, type }
+export const defaultSchedule = [
+  { id: 's1', caseId: '2024-118', dayanId: 'd1', date: '2025-04-15', time: '10:00', type: 'hearing', label: 'דיון שני' },
+  { id: 's2', caseId: '2024-203', dayanId: 'd2', date: '2025-04-22', time: '11:00', type: 'review',  label: 'בדיקת מסמכים' },
+  { id: 's3', caseId: '2023-077', dayanId: 'd3', date: '2025-05-01', time: '09:00', type: 'hearing', label: 'דיון ראשון' },
 ];
 
 export const mockDocs = [
@@ -79,13 +133,49 @@ export function AppProvider({ children }) {
   const [cases, setCases] = useState(mockCases);
   const [docs, setDocs] = useState(mockDocs);
   const [payments] = useState(mockPayments);
+  const [dayans] = useState(mockDayans);
+  const [availability, setAvailability] = useState(defaultAvailability);
+  const [schedule, setSchedule] = useState(defaultSchedule);
+  const [loggedDayan, setLoggedDayan] = useState(null); // dayan object or null
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const addCase = (newCase) => {
     setCases(prev => [newCase, ...prev]);
   };
 
+  const assignDayan = (caseId, dayanId) => {
+    const dayan = dayans.find(d => d.id === dayanId);
+    setCases(prev => prev.map(c =>
+      c.id === caseId
+        ? { ...c, dayanId, dayan: dayan?.short || null }
+        : c
+    ));
+  };
+
+  const addScheduleItem = (item) => {
+    setSchedule(prev => [...prev, { ...item, id: `s${Date.now()}` }]);
+  };
+
+  const removeScheduleItem = (id) => {
+    setSchedule(prev => prev.filter(s => s.id !== id));
+  };
+
+  const updateAvailability = (dayanId, data) => {
+    setAvailability(prev => ({ ...prev, [dayanId]: data }));
+  };
+
   return (
-    <AppContext.Provider value={{ isLoggedIn, setIsLoggedIn, cases, docs, payments, addCase, user: mockUser }}>
+    <AppContext.Provider value={{
+      isLoggedIn, setIsLoggedIn,
+      cases, docs, payments, addCase,
+      user: mockUser,
+      dayans,
+      availability, updateAvailability,
+      schedule, addScheduleItem, removeScheduleItem,
+      assignDayan,
+      loggedDayan, setLoggedDayan,
+      isAdmin, setIsAdmin,
+    }}>
       {children}
     </AppContext.Provider>
   );

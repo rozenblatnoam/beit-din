@@ -1,11 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Scale, User, LogOut, Menu, X } from 'lucide-react';
+import { Scale, User, LogOut, Menu, X, Gavel, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
-  const { isLoggedIn, setIsLoggedIn, user } = useApp();
+  const { isLoggedIn, setIsLoggedIn, user, loggedDayan, setLoggedDayan, isAdmin, setIsAdmin } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -15,7 +15,15 @@ export default function Navbar() {
     { to: '/new-case', label: 'פתיחת תיק' },
     { to: '/documents', label: 'מסמכים' },
     { to: '/payment', label: 'סליקה' },
+    { to: '/dayan', label: 'פורטל דיינים', icon: <Gavel size={13} /> },
   ];
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setLoggedDayan(null);
+    setIsAdmin(false);
+    navigate('/');
+  };
 
   return (
     <nav className={styles.navbar}>
@@ -41,13 +49,45 @@ export default function Navbar() {
               }
               onClick={() => setMobileOpen(false)}
             >
+              {item.icon && <span style={{ marginLeft: '4px', display: 'inline-flex', verticalAlign: 'middle' }}>{item.icon}</span>}
               {item.label}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink
+              to="/admin/scheduler"
+              className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
+              onClick={() => setMobileOpen(false)}
+              style={{ color: 'var(--gold)' }}
+            >
+              <ShieldCheck size={13} style={{ marginLeft: '4px', display: 'inline', verticalAlign: 'middle' }} />
+              שיבוץ מנהל
+            </NavLink>
+          )}
         </div>
 
         <div className={styles.navActions}>
-          {isLoggedIn ? (
+          {loggedDayan ? (
+            <div className={styles.userMenu}>
+              <div className={styles.userBadge}>
+                <Gavel size={14} />
+                <span>{loggedDayan.short}</span>
+              </div>
+              <button className={styles.logoutBtn} onClick={handleLogout}>
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : isAdmin ? (
+            <div className={styles.userMenu}>
+              <div className={styles.userBadge}>
+                <ShieldCheck size={14} />
+                <span>מנהל</span>
+              </div>
+              <button className={styles.logoutBtn} onClick={handleLogout}>
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : isLoggedIn ? (
             <div className={styles.userMenu}>
               <div className={styles.userBadge}>
                 <User size={14} />

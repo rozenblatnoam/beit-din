@@ -33,7 +33,7 @@ export default function Home() {
             בית דין לממונות מוסמך — משפט עברי
           </div>
           <h1 className={styles.heroTitle}>
-            ברוכים הבאים ל<span>כרמי המשפט</span>
+            ברוכים הבאים לבית הדין <span>כרמי המשפט</span>
           </h1>
           <p className={styles.heroDesc}>
             פלטפורמה דיגיטלית מתקדמת לניהול הליכי בוררות ודיני ממונות בהתאם לדין תורה.

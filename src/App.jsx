@@ -7,6 +7,9 @@ import Dashboard from './pages/Dashboard';
 import NewCase from './pages/NewCase';
 import Documents from './pages/Documents';
 import Payment from './pages/Payment';
+import DayanLogin from './pages/DayanLogin';
+import DayanPortal from './pages/DayanPortal';
+import AdminScheduler from './pages/AdminScheduler';
 import './styles/global.css';
 
 export default function App() {
@@ -21,6 +24,9 @@ export default function App() {
             <Route path="/new-case" element={<NewCase />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/dayan" element={<DayanLogin />} />
+            <Route path="/dayan/portal" element={<DayanPortal />} />
+            <Route path="/admin/scheduler" element={<AdminScheduler />} />
           </Routes>
         </main>
         <Footer />
