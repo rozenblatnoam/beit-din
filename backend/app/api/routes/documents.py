@@ -1,0 +1,72 @@
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.models.case import Case
+from app.models.document import Document
+from app.models.user import User
+from app.schemas.document import DocumentOut
+from app.services import google_drive
+
+router = APIRouter(prefix="/documents", tags=["documents"])
+
+ALLOWED_TYPES = {"application/pdf", "image/jpeg", "image/png", "application/msword",
+                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+MAX_SIZE_MB = 20
+
+
+@router.post("/", response_model=DocumentOut, status_code=201)
+def upload_document(
+    case_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == current_user.id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="תיק לא נמצא")
+
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך")
+
+    content = file.file.read()
+    if len(content) > MAX_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=400, detail=f"הקובץ גדול מ-{MAX_SIZE_MB}MB")
+    file.file.seek(0)
+
+    drive_data = google_drive.upload_file(file, case.case_number)
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    doc = Document(
+        name=file.filename,
+        case_id=case_id,
+        uploaded_by_user_id=current_user.id,
+        file_type=ext,
+        size_bytes=drive_data["size_bytes"],
+        drive_file_id=drive_data["drive_file_id"],
+        drive_view_url=drive_data["drive_view_url"],
+    )
+    db.add(doc)
+    db.commit()
+    db.refresh(doc)
+    return doc
+
+
+@router.get("/case/{case_id}", response_model=list[DocumentOut])
+def list_documents(case_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    case = db.query(Case).filter(Case.id == case_id, Case.user_id == current_user.id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="תיק לא נמצא")
+    return db.query(Document).filter(Document.case_id == case_id).all()
+
+
+@router.delete("/{doc_id}", status_code=204)
+def delete_document(doc_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    doc = db.query(Document).filter(Document.id == doc_id, Document.uploaded_by_user_id == current_user.id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="מסמך לא נמצא")
+    if doc.drive_file_id:
+        google_drive.delete_file(doc.drive_file_id)
+    db.delete(doc)
+    db.commit()
