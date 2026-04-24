@@ -6,6 +6,7 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loggedDayan, setLoggedDayan] = useState(null);
+  const [loggedLawyer, setLoggedLawyer] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [cases, setCases] = useState([]);
   const [docs, setDocs] = useState([]);
@@ -20,6 +21,7 @@ export function AppProvider({ children }) {
     const token = localStorage.getItem("access_token");
     const savedUser = localStorage.getItem("user");
     const savedDayan = localStorage.getItem("dayan");
+    const savedLawyer = localStorage.getItem("lawyer");
 
     if (token && savedUser) {
       const u = JSON.parse(savedUser);
@@ -27,6 +29,8 @@ export function AppProvider({ children }) {
       setIsAdmin(u.is_admin || false);
     } else if (token && savedDayan) {
       setLoggedDayan(JSON.parse(savedDayan));
+    } else if (token && savedLawyer) {
+      setLoggedLawyer(JSON.parse(savedLawyer));
     }
     setLoading(false);
   }, []);
@@ -57,10 +61,19 @@ export function AppProvider({ children }) {
     setLoggedDayan(data.dayan);
   }, []);
 
+  const loginLawyer = useCallback(async (email, password) => {
+    const data = await api.post("/auth/lawyer/login", { email, password });
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    localStorage.setItem("lawyer", JSON.stringify(data.lawyer));
+    setLoggedLawyer(data.lawyer);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.clear();
     setUser(null);
     setLoggedDayan(null);
+    setLoggedLawyer(null);
     setIsAdmin(false);
     setCases([]);
     setPayments([]);
@@ -152,11 +165,14 @@ export function AppProvider({ children }) {
         user,
         loggedDayan,
         setLoggedDayan,
+        loggedLawyer,
+        setLoggedLawyer,
         isAdmin,
         setIsAdmin,
         login,
         register,
         loginDayan,
+        loginLawyer,
         logout,
         cases,
         setCases,
@@ -179,6 +195,7 @@ export function AppProvider({ children }) {
         // Google OAuth URLs
         googleLoginUrl: api.googleLoginUrl,
         googleDayanLoginUrl: api.googleDayanLoginUrl,
+        googleLawyerLoginUrl: api.googleLawyerLoginUrl,
       }}
     >
       {children}

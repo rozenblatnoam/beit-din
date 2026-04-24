@@ -70,4 +70,5 @@ export const api = {
 
   googleLoginUrl: () => `${BASE}/auth/google`,
   googleDayanLoginUrl: () => `${BASE}/auth/dayan/google`,
+  googleLawyerLoginUrl: () => `${BASE}/auth/lawyer/google`,
 };

@@ -5,8 +5,10 @@ from app.core.database import get_db
 from app.core.security import require_admin, hash_password
 from app.models.user import User
 from app.models.dayan import Dayan
+from app.models.lawyer import Lawyer
 from app.models.case import Case
 from app.schemas.dayan import DayanCreate, DayanOut, DayanUpdate
+from app.schemas.lawyer import LawyerCreate, LawyerOut, LawyerUpdate
 from app.schemas.case import CaseOut, CaseUpdate
 from app.services import email as email_service
 
@@ -57,6 +59,53 @@ def delete_dayan(dayan_id: int, db: Session = Depends(get_db), _=Depends(require
     if not dayan:
         raise HTTPException(status_code=404, detail="דיין לא נמצא")
     db.delete(dayan)
+    db.commit()
+
+
+# ─── Lawyers ───────────────────────────────────────────
+
+@router.post("/lawyers", response_model=LawyerOut, status_code=status.HTTP_201_CREATED)
+def create_lawyer(body: LawyerCreate, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    if db.query(Lawyer).filter(Lawyer.email == body.email).first():
+        raise HTTPException(status_code=400, detail="עו\"ד/טו\"ר עם מייל זה כבר קיים")
+    lawyer = Lawyer(
+        email=body.email,
+        name=body.name,
+        short_name=body.short_name,
+        role=body.role,
+        license_number=body.license_number,
+        hashed_password=hash_password(body.password),
+        created_by_admin_id=admin.id,
+    )
+    db.add(lawyer)
+    db.commit()
+    db.refresh(lawyer)
+    return lawyer
+
+
+@router.get("/lawyers", response_model=list[LawyerOut])
+def list_lawyers(db: Session = Depends(get_db), _=Depends(require_admin)):
+    return db.query(Lawyer).all()
+
+
+@router.patch("/lawyers/{lawyer_id}", response_model=LawyerOut)
+def update_lawyer(lawyer_id: int, body: LawyerUpdate, db: Session = Depends(get_db), _=Depends(require_admin)):
+    lawyer = db.query(Lawyer).filter(Lawyer.id == lawyer_id).first()
+    if not lawyer:
+        raise HTTPException(status_code=404, detail="עו\"ד/טו\"ר לא נמצא")
+    for field, value in body.model_dump(exclude_none=True).items():
+        setattr(lawyer, field, value)
+    db.commit()
+    db.refresh(lawyer)
+    return lawyer
+
+
+@router.delete("/lawyers/{lawyer_id}", status_code=204)
+def delete_lawyer(lawyer_id: int, db: Session = Depends(get_db), _=Depends(require_admin)):
+    lawyer = db.query(Lawyer).filter(Lawyer.id == lawyer_id).first()
+    if not lawyer:
+        raise HTTPException(status_code=404, detail="עו\"ד/טו\"ר לא נמצא")
+    db.delete(lawyer)
     db.commit()
 
 

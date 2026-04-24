@@ -10,6 +10,7 @@ class Document(Base):
     case_id = Column(Integer, ForeignKey("cases.id"), nullable=False)
     uploaded_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     uploaded_by_dayan_id = Column(Integer, ForeignKey("dayans.id"), nullable=True)
+    uploaded_by_lawyer_id = Column(Integer, ForeignKey("lawyers.id"), nullable=True)
     file_type = Column(String, nullable=True)
     size_bytes = Column(Integer, nullable=True)
     drive_file_id = Column(String, nullable=True)

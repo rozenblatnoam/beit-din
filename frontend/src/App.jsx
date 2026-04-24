@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import SplashScreen from './components/SplashScreen';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -10,12 +12,24 @@ import Documents from './pages/Documents';
 import Payment from './pages/Payment';
 import DayanLogin from './pages/DayanLogin';
 import DayanPortal from './pages/DayanPortal';
+import LawyerLogin from './pages/LawyerLogin';
+import LawyerPortal from './pages/LawyerPortal';
 import AdminScheduler from './pages/AdminScheduler';
 import './styles/global.css';
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(
+    () => !sessionStorage.getItem('splash_shown')
+  );
+
+  const handleSplashDone = () => {
+    sessionStorage.setItem('splash_shown', '1');
+    setShowSplash(false);
+  };
+
   return (
     <AppProvider>
+      {showSplash && <SplashScreen onDone={handleSplashDone} />}
       <BrowserRouter>
         <Navbar />
         <main>
@@ -28,6 +42,8 @@ export default function App() {
             <Route path="/payment" element={<Payment />} />
             <Route path="/dayan" element={<DayanLogin />} />
             <Route path="/dayan/portal" element={<DayanPortal />} />
+            <Route path="/lawyer" element={<LawyerLogin />} />
+            <Route path="/lawyer/portal" element={<LawyerPortal />} />
             <Route path="/admin/scheduler" element={<AdminScheduler />} />
           </Routes>
         </main>

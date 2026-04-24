@@ -1,0 +1,308 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy) 100%);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.lawyerInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold-mid), var(--gold-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.name {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 20px;
+  margin: 0;
+}
+
+.role {
+  color: #cbd5e1;
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+
+/* SEARCH */
+.searchCard {
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 17px;
+  margin: 0 0 1rem;
+  color: var(--navy);
+}
+
+.searchRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.searchField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.searchField label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.searchInput {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: white;
+  transition: border-color var(--transition);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--gold-mid);
+}
+
+.searchBtn {
+  background: var(--navy);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  transition: all var(--transition);
+}
+
+.searchBtn:hover { background: var(--navy-mid); }
+.searchBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.hint {
+  margin-top: 0.75rem;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* RESULTS */
+.results { margin-top: 0.5rem; }
+
+.tableCard { padding: 0; overflow: hidden; }
+.tableWrap { overflow-x: auto; }
+
+.empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.openBtn {
+  background: var(--gold-mid);
+  color: var(--navy);
+  border: none;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.openBtn:hover { background: #c8a020; }
+
+/* CASE DETAIL */
+.backBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.backBtn:hover { background: var(--bg-secondary); color: var(--navy); }
+
+.caseCard { padding: 1.25rem; margin-bottom: 1rem; }
+
+.caseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.caseNumber {
+  font-size: 12px;
+  color: var(--gold-dark);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.caseSubject {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 20px;
+  margin: 2px 0 0;
+  color: var(--navy);
+}
+
+.caseMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.caseMeta div {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* DOCS */
+.docsCard { padding: 1.25rem; }
+
+.docsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.docsHeader .sectionTitle { margin: 0; }
+
+.uploadBtn {
+  background: var(--gold-mid);
+  color: var(--navy);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.uploadBtn:hover { background: #c8a020; }
+.uploadBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.docsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.docRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.docRow:hover { border-color: var(--gold-mid); }
+
+.docIcon { color: var(--gold-dark); flex-shrink: 0; }
+
+.docMain { flex: 1; min-width: 0; }
+
+.docName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docMeta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.docActions {
+  display: flex;
+  gap: 6px;
+}
+
+.docBtn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.docBtn:hover {
+  background: var(--gold-mid);
+  color: var(--navy);
+  border-color: var(--gold-mid);
+}
+
+.errorMsg {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .searchRow { grid-template-columns: 1fr; }
+  .searchBtn { width: 100%; justify-content: center; }
+  .caseHeader { flex-direction: column; align-items: flex-start; }
+}

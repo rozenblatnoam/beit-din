@@ -61,6 +61,18 @@ def get_current_dayan(token: str = Depends(oauth2_scheme), db: Session = Depends
     return dayan
 
 
+def get_current_lawyer(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    from app.models.lawyer import Lawyer
+    payload = decode_token(token)
+    if payload.get("role") != "lawyer":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="גישה לעורכי דין/טוענים בלבד")
+    lawyer_id: str = payload.get("sub")
+    lawyer = db.query(Lawyer).filter(Lawyer.id == int(lawyer_id)).first()
+    if not lawyer or not lawyer.is_active:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="עו\"ד/טו\"ר לא נמצא")
+    return lawyer
+
+
 def require_admin(current_user=Depends(get_current_user)):
     if not current_user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="גישה למנהלים בלבד")

@@ -20,6 +20,7 @@ class Case(Base):
     status = Column(Enum(CaseStatus), default=CaseStatus.open, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     dayan_id = Column(Integer, ForeignKey("dayans.id"), nullable=True)
+    lawyer_id = Column(Integer, ForeignKey("lawyers.id"), nullable=True)
     amount = Column(Numeric(12, 2), nullable=True)
     next_hearing = Column(DateTime(timezone=True), nullable=True)
     opened_at = Column(DateTime(timezone=True), server_default=func.now())

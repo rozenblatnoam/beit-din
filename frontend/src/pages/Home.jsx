@@ -13,13 +13,6 @@ const services = [
   { icon: <Scroll size={28} />, title: 'פסקי דין', desc: 'צפייה בפסק הדין ואישורים רשמיים לאחר תום ההליך', route: '/documents' },
 ];
 
-const stats = [
-  { value: '14+', label: 'שנות פעילות' },
-  { value: '2,400+', label: 'תיקים שנסגרו' },
-  { value: '98%', label: 'שביעות רצון' },
-  { value: '72 שעות', label: 'זמן תגובה ממוצע' },
-];
-
 export default function Home() {
   const navigate = useNavigate();
 
@@ -54,14 +47,16 @@ export default function Home() {
         <div className={styles.heroDecor}>⚖</div>
       </section>
 
-      {/* STATS */}
-      <section className={styles.statsBar}>
-        {stats.map((s, i) => (
-          <div key={i} className={styles.statItem}>
-            <span className={styles.statValue}>{s.value}</span>
-            <span className={styles.statLabel}>{s.label}</span>
+      {/* LOGO BANNER */}
+      <section className={styles.logoBanner}>
+        <img src="/logo.png" alt="DinLink" className={styles.logoBannerImg} />
+        <div className={styles.logoBannerText}>
+          <div className={styles.logoBannerBrand}>
+            <span className={styles.logoBannerDin}>Din</span>
+            <span className={styles.logoBannerLink}>Link</span>
           </div>
-        ))}
+          <div className={styles.logoBannerTagline}>הפלטפורמה הדיגיטלית לבתי הדין</div>
+        </div>
       </section>
 
       <div className="page-content" style={{ paddingTop: '2rem' }}>

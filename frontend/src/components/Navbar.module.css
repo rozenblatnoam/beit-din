@@ -19,40 +19,32 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
 }
 
-.logoIcon {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, var(--gold-mid), var(--gold-dark));
+.logoImg {
+  height: 46px;
+  width: 46px;
+  object-fit: contain;
+  background: white;
   border-radius: 10px;
+  padding: 4px;
+}
+
+.logoBrand {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
 }
 
-.logoText {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.25;
-}
-
-.logoName {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--gold-light);
-  letter-spacing: 0.3px;
-}
-
-.logoSub {
-  font-size: 11px;
-  color: #94a3b8;
-}
+.logoBrandDin { color: var(--gold-light); }
+.logoBrandLink { color: var(--gold-mid); }
 
 .navLinks {
   display: flex;

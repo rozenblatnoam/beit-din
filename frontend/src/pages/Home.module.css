@@ -66,34 +66,47 @@
   user-select: none;
 }
 
-.statsBar {
-  background: var(--navy-mid);
+.logoBanner {
+  background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy) 100%);
   display: flex;
   justify-content: center;
-  gap: 0;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
   border-bottom: 3px solid var(--gold-mid);
 }
 
-.statItem {
+.logoBannerImg {
+  height: 84px;
+  width: 84px;
+  object-fit: contain;
+  background: white;
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.25);
+}
+
+.logoBannerText {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 1.25rem 3rem;
-  border-left: 1px solid rgba(255,255,255,0.08);
+  gap: 2px;
 }
-.statItem:last-child { border-left: none; }
 
-.statValue {
+.logoBannerBrand {
   font-family: 'Frank Ruhl Libre', serif;
-  font-size: 26px;
+  font-size: 34px;
   font-weight: 700;
-  color: var(--gold-mid);
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 
-.statLabel {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 2px;
+.logoBannerDin { color: var(--gold-light); }
+.logoBannerLink { color: var(--gold-mid); }
+
+.logoBannerTagline {
+  color: #cbd5e1;
+  font-size: 14px;
+  letter-spacing: 0.02em;
 }
 
 .servicesGrid {
@@ -192,8 +205,9 @@
 
 @media (max-width: 768px) {
   .heroTitle { font-size: 28px; }
-  .statsBar { flex-wrap: wrap; }
-  .statItem { padding: 1rem 1.5rem; border-left: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .logoBanner { flex-direction: column; gap: 0.75rem; padding: 1.25rem; }
+  .logoBannerImg { height: 64px; width: 64px; }
+  .logoBannerBrand { font-size: 26px; }
   .infoRow { grid-template-columns: 1fr 1fr; }
   .heroDecor { display: none; }
 }

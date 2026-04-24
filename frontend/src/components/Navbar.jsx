@@ -1,11 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Scale, User, LogOut, Menu, X, Gavel, ShieldCheck } from 'lucide-react';
+import { User, LogOut, Menu, X, Gavel, ShieldCheck, Briefcase } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
-  const { isLoggedIn, user, loggedDayan, isAdmin, logout } = useApp();
+  const { isLoggedIn, user, loggedDayan, loggedLawyer, isAdmin, logout } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -16,6 +16,7 @@ export default function Navbar() {
     { to: '/documents', label: 'מסמכים' },
     { to: '/payment', label: 'סליקה' },
     { to: '/dayan', label: 'פורטל דיינים', icon: <Gavel size={13} /> },
+    { to: '/lawyer', label: 'פורטל עו"ד/טו"ר', icon: <Briefcase size={13} /> },
   ];
 
   const handleLogout = () => {
@@ -28,12 +29,10 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <div className={styles.inner}>
         <NavLink to="/" className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <Scale size={22} strokeWidth={1.5} />
-          </div>
-          <div className={styles.logoText}>
-            <span className={styles.logoName}>כרמי המשפט</span>
-            <span className={styles.logoSub}>בית דין לממונות</span>
+          <img src="/logo.png" alt="DinLink" className={styles.logoImg} />
+          <div className={styles.logoBrand}>
+            <span className={styles.logoBrandDin}>Din</span>
+            <span className={styles.logoBrandLink}>Link</span>
           </div>
         </NavLink>
 
@@ -69,6 +68,16 @@ export default function Navbar() {
               <div className={styles.userBadge}>
                 <Gavel size={14} />
                 <span>{loggedDayan.short_name || loggedDayan.name}</span>
+              </div>
+              <button className={styles.logoutBtn} onClick={handleLogout} title="יציאה">
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : loggedLawyer ? (
+            <div className={styles.userMenu}>
+              <div className={styles.userBadge}>
+                <Briefcase size={14} />
+                <span>{loggedLawyer.short_name || loggedLawyer.name}</span>
               </div>
               <button className={styles.logoutBtn} onClick={handleLogout} title="יציאה">
                 <LogOut size={14} />
