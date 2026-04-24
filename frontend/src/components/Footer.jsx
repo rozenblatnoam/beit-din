@@ -1,4 +1,3 @@
-import { Scale } from 'lucide-react';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -6,10 +5,12 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <div className={styles.logoIcon}><Scale size={18} strokeWidth={1.5} /></div>
+          <img src="/logo.png" alt="DinLink" className={styles.logoImg} />
           <div>
-            <div className={styles.name}>כרמי המשפט</div>
-            <div className={styles.sub}>בית דין לממונות</div>
+            <div className={styles.name}>
+              <span className={styles.nameDin}>Din</span><span className={styles.nameLink}>Link</span>
+            </div>
+            <div className={styles.sub}>הפלטפורמה הדיגיטלית לבתי הדין</div>
           </div>
         </div>
         <div className={styles.links}>
@@ -19,7 +20,7 @@ export default function Footer() {
           <span>צור קשר</span>
         </div>
         <div className={styles.copy}>
-          © {new Date().getFullYear()} כרמי המשפט. כל הזכויות שמורות. מס' רישום: 58-123456
+          © {new Date().getFullYear()} DinLink. כל הזכויות שמורות.
         </div>
       </div>
     </footer>

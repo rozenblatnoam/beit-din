@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Scale, FolderOpen, User, FileText, CreditCard, Calendar, Mail, Lock, Scroll, ArrowLeft } from 'lucide-react';
+import { FolderOpen, User, FileText, CreditCard, Calendar, Mail, Lock, Scroll, ArrowLeft } from 'lucide-react';
 import styles from './Home.module.css';
 
 const services = [
@@ -21,12 +21,8 @@ export default function Home() {
       {/* HERO */}
       <section className={styles.hero}>
         <div className={styles.heroInner}>
-          <div className={styles.heroBadge}>
-            <Scale size={14} />
-            בית דין לממונות מוסמך — משפט עברי
-          </div>
           <h1 className={styles.heroTitle}>
-            ברוכים הבאים לבית הדין <span>כרמי המשפט</span>
+            ברוכים הבאים למערכת <span className={styles.heroBrand}><span className={styles.heroDin}>Din</span><span className={styles.heroLink}>Link</span></span>
           </h1>
           <p className={styles.heroDesc}>
             פלטפורמה דיגיטלית מתקדמת לניהול הליכי בוררות ודיני ממונות בהתאם לדין תורה.

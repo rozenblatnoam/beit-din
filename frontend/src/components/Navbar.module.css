@@ -41,6 +41,7 @@
   line-height: 1;
   display: flex;
   align-items: center;
+  direction: ltr;
 }
 
 .logoBrandDin { color: var(--gold-light); }

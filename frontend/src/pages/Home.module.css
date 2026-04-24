@@ -40,6 +40,16 @@
 
 .heroTitle span { color: var(--gold-mid); }
 
+.heroBrand {
+  font-family: 'Frank Ruhl Libre', serif;
+  display: inline-flex;
+  direction: ltr;
+  gap: 0.02em;
+}
+
+.heroDin { color: white; }
+.heroLink { color: var(--gold-mid); }
+
 .heroDesc {
   font-size: 16px;
   color: #94a3b8;

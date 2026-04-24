@@ -1,24 +1,29 @@
-# DinLink — Start all services in dev
+# DinLink - Start all services in dev
 # Usage:  .\start.ps1
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 
 Write-Host ""
-Write-Host "DinLink — starting dev stack" -ForegroundColor Cyan
+Write-Host "DinLink - starting dev stack" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 
-# 1. Verify Docker Desktop is running
+# 1. Verify Docker Desktop is running (wait up to 30s for startup)
 Write-Host ""
 Write-Host "[1/4] Checking Docker..." -ForegroundColor Yellow
-try {
-    docker info --format "{{.ServerVersion}}" 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "Docker not responding" }
-    Write-Host "  Docker OK" -ForegroundColor Green
-} catch {
-    Write-Host "  Docker Desktop is not running. Please start it and try again." -ForegroundColor Red
+$dockerOK = $false
+for ($i = 1; $i -le 30; $i++) {
+    $null = docker info --format "{{.ServerVersion}}" 2>$null
+    if ($LASTEXITCODE -eq 0) { $dockerOK = $true; break }
+    if ($i -eq 1) { Write-Host "  Waiting for Docker Desktop..." -ForegroundColor Gray }
+    Start-Sleep -Seconds 1
+}
+if (-not $dockerOK) {
+    Write-Host "  Docker Desktop is not running." -ForegroundColor Red
+    Write-Host "  Open Docker Desktop from the Start menu, wait for the whale icon to turn green, then try again." -ForegroundColor Red
     exit 1
 }
+Write-Host "  Docker OK" -ForegroundColor Green
 
 # 2. Start DB container (detached)
 Write-Host ""
@@ -45,31 +50,24 @@ for ($i = 1; $i -le $maxTries; $i++) {
 Write-Host ""
 Write-Host "[3/4] Applying migrations..." -ForegroundColor Yellow
 Push-Location "$root\backend"
-try {
-    alembic upgrade head 2>&1 | Out-Null
-    Write-Host "  Migrations up to date" -ForegroundColor Green
-} catch {
-    Write-Host "  Migration failed" -ForegroundColor Red
-    Pop-Location
+alembic upgrade head | Out-Null
+$migRc = $LASTEXITCODE
+Pop-Location
+if ($migRc -ne 0) {
+    Write-Host "  Migration failed (exit code $migRc). Run 'alembic upgrade head' in backend/ to see the error." -ForegroundColor Red
     exit 1
 }
-Pop-Location
+Write-Host "  Migrations up to date" -ForegroundColor Green
 
 # 4. Open backend + frontend in new terminal windows
 Write-Host ""
 Write-Host "[4/4] Launching backend + frontend..." -ForegroundColor Yellow
 
-$useWT = $null -ne (Get-Command wt -ErrorAction SilentlyContinue)
 $backendCmd = "cd '$root\backend'; python -m uvicorn app.main:app --reload --port 8000"
 $frontendCmd = "cd '$root\frontend'; npm run dev"
 
-if ($useWT) {
-    $wtArgs = "new-tab --title backend powershell -NoExit -Command `"$backendCmd`" ``; new-tab --title frontend powershell -NoExit -Command `"$frontendCmd`""
-    Start-Process wt -ArgumentList $wtArgs
-} else {
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
-}
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd
 
 Start-Sleep -Seconds 2
 

@@ -1,4 +1,4 @@
-# DinLink — Stop all dev services
+# DinLink - Stop all dev services
 # Usage:  .\stop.ps1
 
 $ErrorActionPreference = "SilentlyContinue"
