@@ -12,6 +12,8 @@ class CaseProtocol(Base):
     type = Column(String, nullable=False)  # "hearing_protocol" | "verdict"
     title = Column(String, nullable=True)
     content = Column(Text, nullable=False, default="")
+    drive_file_id = Column(String, nullable=True)
+    drive_edit_url = Column(String, nullable=True)
     author_dayan_id = Column(Integer, ForeignKey("dayans.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

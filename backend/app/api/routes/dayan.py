@@ -48,15 +48,29 @@ def create_protocol(
     db: Session = Depends(get_db), dayan: Dayan = Depends(get_current_dayan),
 ):
     case = _ensure_assigned(db, case_id, dayan.id)
+    type_label = "פרוטוקול דיון" if body.type == "hearing_protocol" else "פסק דין"
+    doc_name = body.title or f"{type_label} - {case.case_number}"
+
+    drive_file_id = None
+    drive_edit_url = None
+    if google_drive.is_configured():
+        try:
+            drive_data = google_drive.create_google_doc(doc_name, case.case_number)
+            drive_file_id = drive_data["drive_file_id"]
+            drive_edit_url = drive_data["drive_edit_url"]
+        except Exception:
+            # Drive failed — fall back to in-DB content editor
+            pass
+
     p = CaseProtocol(
         case_id=case_id, type=body.type, title=body.title or "",
         content=body.content or "", author_dayan_id=dayan.id,
+        drive_file_id=drive_file_id, drive_edit_url=drive_edit_url,
     )
     db.add(p)
     db.commit()
     db.refresh(p)
 
-    type_label = "פרוטוקול דיון" if body.type == "hearing_protocol" else "פסק דין"
     events_service.add_event(
         db, case_id, "protocol_created",
         title=f"{type_label} נוצר",

@@ -22,6 +22,8 @@ class ProtocolOut(BaseModel):
     type: str
     title: Optional[str]
     content: str
+    drive_file_id: Optional[str] = None
+    drive_edit_url: Optional[str] = None
     author_dayan_id: Optional[int]
     created_at: datetime
     updated_at: datetime

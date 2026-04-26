@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, Check, FileText, Plus, Loader } from 'lucide-react';
+import { Save, Check, FileText, Plus, Loader, ExternalLink, FileEdit } from 'lucide-react';
 import { api } from '../api/client';
 import styles from './ProtocolEditor.module.css';
 
@@ -71,6 +71,10 @@ export default function ProtocolEditor({ caseId, type }) {
       setProtocol(created);
       setSavedAt(new Date());
       dirtyRef.current = false;
+      // If Drive Doc was created, open it in a new tab automatically
+      if (created.drive_edit_url) {
+        window.open(created.drive_edit_url, '_blank', 'noopener');
+      }
     } catch (e) {
       setError(e?.detail || 'שגיאה ביצירת המסמך');
     } finally {
@@ -109,13 +113,40 @@ export default function ProtocolEditor({ caseId, type }) {
         <FileText size={32} />
         <p>אין {TYPE_LABELS[type]} בתיק עדיין</p>
         <button className={styles.createBtn} onClick={create} disabled={saving}>
-          <Plus size={14} /> צור {TYPE_LABELS[type]} חדש
+          {saving ? <Loader size={14} className={styles.spin} /> : <Plus size={14} />}
+          {saving ? 'יוצר מסמך...' : `צור ${TYPE_LABELS[type]} חדש`}
         </button>
+        <p className={styles.hint}>המסמך ייפתח בחלון חדש לעריכה (Google Docs)</p>
         {error && <div className={styles.error}>{error}</div>}
       </div>
     );
   }
 
+  // Drive-backed protocol — show "open in editor" button
+  if (protocol.drive_edit_url) {
+    return (
+      <div className={styles.driveDoc}>
+        <div className={styles.driveHead}>
+          <div>
+            <h3 className={styles.driveTitle}>
+              <FileEdit size={18} /> {protocol.title || TYPE_LABELS[type]}
+            </h3>
+            <p className={styles.driveSub}>נערך ב-Google Docs · ניתן לייצא ל-Word דרך File → Download</p>
+          </div>
+          <a href={protocol.drive_edit_url} target="_blank" rel="noopener" className={styles.openBtn}>
+            <ExternalLink size={15} /> פתח לעריכה
+          </a>
+        </div>
+        <iframe
+          src={protocol.drive_edit_url.replace('/edit', '/preview')}
+          title={protocol.title || TYPE_LABELS[type]}
+          className={styles.driveFrame}
+        />
+      </div>
+    );
+  }
+
+  // Fallback — Drive not configured, use in-app textarea
   return (
     <div className={styles.editor}>
       <div className={styles.toolbar}>

@@ -12,10 +12,45 @@ settings = get_settings()
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
+def is_configured() -> bool:
+    """True iff Google service-account credentials are present and parseable."""
+    raw = settings.GOOGLE_SERVICE_ACCOUNT_JSON or ""
+    if not raw or raw == "REPLACE_ME" or raw == "{}":
+        return False
+    try:
+        json.loads(raw)
+        return bool(settings.GOOGLE_DRIVE_FOLDER_ID and settings.GOOGLE_DRIVE_FOLDER_ID != "REPLACE_ME")
+    except json.JSONDecodeError:
+        return False
+
+
 def _get_drive_service():
     creds_dict = json.loads(settings.GOOGLE_SERVICE_ACCOUNT_JSON)
     creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return build("drive", "v3", credentials=creds)
+
+
+def create_google_doc(name: str, case_number: str) -> dict:
+    """Create an empty Google Doc inside the case's folder and return its IDs/URLs."""
+    service = _get_drive_service()
+    folder_id = _get_or_create_case_folder(service, case_number)
+
+    file_metadata = {
+        "name": name,
+        "mimeType": "application/vnd.google-apps.document",
+        "parents": [folder_id],
+    }
+    created = service.files().create(body=file_metadata, fields="id,webViewLink").execute()
+
+    # Make the doc editable by anyone with the link (writer)
+    service.permissions().create(
+        fileId=created["id"], body={"type": "anyone", "role": "writer"}
+    ).execute()
+
+    return {
+        "drive_file_id": created["id"],
+        "drive_edit_url": created.get("webViewLink"),
+    }
 
 
 def upload_file(file: UploadFile, case_number: str) -> dict:
