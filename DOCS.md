@@ -169,10 +169,11 @@ beit-din/
 | תפקיד | URL | אימייל | סיסמה |
 |--------|------|--------|-------|
 | **אדמין** | [/login](http://localhost:5173/login) | `admin@karmeimishpat.co.il` | `admin1234` |
+| **דיין דוגמה** | [/dayan](http://localhost:5173/dayan) | `rabbi.cohen@example.com` | `dayan1234` |
 | **עו"ד דוגמה** | [/lawyer](http://localhost:5173/lawyer) | `avi@example.com` | `pass1234` |
 | **לקוח דוגמה** | [/login](http://localhost:5173/login) | `client@example.com` | `client1234` |
 
-**תיק דוגמה:** `2026-0001` — Contract dispute, סכום ₪45,000, משובץ לעו"ד `avi@example.com`.
+**תיק דוגמה:** `2026-0001` — Contract dispute, סכום ₪45,000, משובץ לדיין `rabbi.cohen@example.com` ולעו"ד `avi@example.com`.
 
 **מסד נתונים (Postgres):**
 - Host: `localhost`
