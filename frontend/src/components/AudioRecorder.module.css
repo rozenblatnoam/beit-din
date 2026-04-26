@@ -1,0 +1,120 @@
+.recorder {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.startBtn, .stopBtn, .uploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all var(--transition);
+}
+
+.startBtn {
+  background: #e74c3c;
+  color: white;
+}
+.startBtn:hover { background: #c0392b; }
+
+.stopBtn {
+  background: var(--navy);
+  color: white;
+}
+.stopBtn:hover { background: var(--navy-mid); }
+
+.uploadBtn {
+  background: var(--gold-mid);
+  color: var(--navy);
+}
+.uploadBtn:hover { background: #c8a020; }
+.uploadBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.iconBtn:hover { border-color: var(--gold-mid); color: var(--navy); }
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e74c3c;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.time {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.audio {
+  flex: 1;
+  height: 36px;
+  min-width: 220px;
+}
+
+.error {
+  margin-top: 0.75rem;
+  padding: 8px 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

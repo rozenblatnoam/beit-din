@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gavel, Calendar, Clock, CheckSquare, Square, Save } from 'lucide-react';
+import { Gavel, Calendar, Clock, CheckSquare, Square, Save, FileText, Mic, Folder, ArrowLeft, Trash2, ExternalLink, Upload, Loader } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../api/client';
 import InboxWidget from '../components/InboxWidget';
+import CaseTimeline from '../components/CaseTimeline';
+import ProtocolEditor from '../components/ProtocolEditor';
+import AudioRecorder from '../components/AudioRecorder';
+import DocViewer from '../components/DocViewer';
 import styles from './DayanPortal.module.css';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
@@ -31,6 +35,15 @@ export default function DayanPortal() {
   const [myCases, setMyCases] = useState([]);
   const [avail, setAvail] = useState({ days: [], time_start: '09:00', time_end: '17:00', notes: '' });
   const [localAvail, setLocalAvail] = useState({ days: [], time_start: '09:00', time_end: '17:00', notes: '' });
+
+  // Case detail mode
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [caseTab, setCaseTab] = useState('protocol'); // protocol | verdict | recordings | documents | timeline
+  const [caseDocs, setCaseDocs] = useState([]);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState(null);
+  const fileRef = useRef(null);
 
   useEffect(() => {
     if (!loggedDayan) return;
@@ -94,7 +107,76 @@ export default function DayanPortal() {
     return new Date(iso).toLocaleDateString('he-IL');
   };
 
+  const formatSize = (bytes) => {
+    if (!bytes) return '';
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${kb.toFixed(0)} KB`;
+    return `${(kb / 1024).toFixed(1)} MB`;
+  };
+
   const mySchedule = schedule.filter(s => s.dayan_id === loggedDayan.id);
+
+  const openCase = async (c) => {
+    setSelectedCase(c);
+    setCaseTab('protocol');
+    try {
+      const docs = await api.get(`/dayan/cases/${c.id}/documents`);
+      setCaseDocs(docs);
+    } catch {
+      setCaseDocs([]);
+    }
+  };
+
+  const refreshCaseDocs = async () => {
+    if (!selectedCase) return;
+    try {
+      const docs = await api.get(`/dayan/cases/${selectedCase.id}/documents`);
+      setCaseDocs(docs);
+    } catch {}
+  };
+
+  const handleAudioUpload = async (file) => {
+    if (!selectedCase) return;
+    setUploadingAudio(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      await api.uploadFile(`/dayan/cases/${selectedCase.id}/documents`, form);
+      await refreshCaseDocs();
+    } finally {
+      setUploadingAudio(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedCase) return;
+    setUploadingFile(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      await api.uploadFile(`/dayan/cases/${selectedCase.id}/documents`, form);
+      await refreshCaseDocs();
+      e.target.value = '';
+    } catch (err) {
+      alert(err?.detail || 'שגיאה בהעלאה');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteDoc = async (docId) => {
+    if (!confirm('למחוק את הקובץ?')) return;
+    try {
+      await api.delete(`/dayan/documents/${docId}`);
+      setCaseDocs((prev) => prev.filter(d => d.id !== docId));
+    } catch (e) {
+      alert(e?.detail || 'שגיאה במחיקה');
+    }
+  };
+
+  const audioDocs = caseDocs.filter(d => d.file_type === 'audio');
+  const otherDocs = caseDocs.filter(d => d.file_type !== 'audio');
 
   return (
     <div className="page-content">
@@ -166,7 +248,7 @@ export default function DayanPortal() {
       )}
 
       {/* CASES TAB */}
-      {activeTab === 'cases' && (
+      {activeTab === 'cases' && !selectedCase && (
         <div className={styles.panel}>
           {myCases.length === 0 ? (
             <div className={styles.empty}><Gavel size={32} /><p>אין תיקים משובצים</p></div>
@@ -175,11 +257,11 @@ export default function DayanPortal() {
               <div className={styles.tableWrap}>
                 <table className="data-table">
                   <thead>
-                    <tr><th>מס׳ תיק</th><th>נושא</th><th>נפתח</th><th>סטטוס</th><th>סכום</th><th>דיון קרוב</th></tr>
+                    <tr><th>מס׳ תיק</th><th>נושא</th><th>נפתח</th><th>סטטוס</th><th>סכום</th><th>דיון קרוב</th><th></th></tr>
                   </thead>
                   <tbody>
                     {myCases.map(c => (
-                      <tr key={c.id}>
+                      <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => openCase(c)}>
                         <td><strong>{c.case_number}</strong></td>
                         <td>{c.subject}</td>
                         <td>{formatDateShort(c.opened_at)}</td>
@@ -188,6 +270,7 @@ export default function DayanPortal() {
                         </td>
                         <td>{c.amount ? `₪${Number(c.amount).toLocaleString()}` : '—'}</td>
                         <td>{c.next_hearing ? formatDateShort(c.next_hearing) : '—'}</td>
+                        <td><button className={styles.openBtn} onClick={(e) => { e.stopPropagation(); openCase(c); }}>פתח</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -195,6 +278,129 @@ export default function DayanPortal() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* CASE DETAIL */}
+      {activeTab === 'cases' && selectedCase && (
+        <div className={styles.panel}>
+          <button className={styles.backBtn} onClick={() => setSelectedCase(null)}>
+            <ArrowLeft size={14} /> חזרה לרשימת התיקים
+          </button>
+
+          <div className={`card ${styles.caseDetailHeader}`}>
+            <div>
+              <div className={styles.caseNumberLabel}>{selectedCase.case_number}</div>
+              <h3 className={styles.caseSubject}>{selectedCase.subject}</h3>
+              <div className={styles.caseMetaRow}>
+                <span className={`badge ${statusMap[selectedCase.status]?.cls}`}>{selectedCase.status_label}</span>
+                {selectedCase.next_hearing && (
+                  <span><Calendar size={12} /> דיון קרוב: {formatDateShort(selectedCase.next_hearing)}</span>
+                )}
+                {selectedCase.amount && <span>₪{Number(selectedCase.amount).toLocaleString()}</span>}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.caseTabs}>
+            {[
+              { id: 'protocol', label: 'פרוטוקול דיון', icon: <FileText size={14} /> },
+              { id: 'verdict', label: 'פסק דין', icon: <FileText size={14} /> },
+              { id: 'recordings', label: `הקלטות (${audioDocs.length})`, icon: <Mic size={14} /> },
+              { id: 'documents', label: `מסמכים (${otherDocs.length})`, icon: <Folder size={14} /> },
+              { id: 'timeline', label: 'ציר זמן', icon: <Clock size={14} /> },
+            ].map(t => (
+              <button key={t.id}
+                className={`${styles.caseTabBtn} ${caseTab === t.id ? styles.caseTabActive : ''}`}
+                onClick={() => setCaseTab(t.id)}>
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className={`card ${styles.caseTabContent}`}>
+            {caseTab === 'protocol' && (
+              <ProtocolEditor caseId={selectedCase.id} type="hearing_protocol" />
+            )}
+            {caseTab === 'verdict' && (
+              <ProtocolEditor caseId={selectedCase.id} type="verdict" />
+            )}
+            {caseTab === 'recordings' && (
+              <div>
+                <h3 className={styles.sectionTitle}><Mic size={15} /> הקלטה חדשה</h3>
+                <AudioRecorder onUpload={handleAudioUpload} uploading={uploadingAudio} />
+                <h3 className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>
+                  <Folder size={15} /> הקלטות שמורות ({audioDocs.length})
+                </h3>
+                {audioDocs.length === 0 ? (
+                  <div className={styles.empty}><p>אין הקלטות עדיין</p></div>
+                ) : (
+                  <div className={styles.docsList}>
+                    {audioDocs.map(d => (
+                      <div key={d.id} className={styles.docRow}>
+                        <Mic size={16} className={styles.docIcon} />
+                        <div className={styles.docMain}>
+                          <div className={styles.docName}>{d.name}</div>
+                          <div className={styles.docMeta}>{formatSize(d.size_bytes)} · {formatDateShort(d.uploaded_at)}</div>
+                        </div>
+                        {d.drive_view_url && (
+                          <a href={d.drive_view_url} target="_blank" rel="noreferrer" className={styles.docBtn} title="הקשב">
+                            <ExternalLink size={14} />
+                          </a>
+                        )}
+                        <button className={styles.docBtn} onClick={() => handleDeleteDoc(d.id)} title="מחק">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {caseTab === 'documents' && (
+              <div>
+                <div className={styles.docsHeader}>
+                  <h3 className={styles.sectionTitle}><Folder size={15} /> מסמכי התיק</h3>
+                  <button className={styles.uploadBtn} onClick={() => fileRef.current?.click()} disabled={uploadingFile}>
+                    {uploadingFile ? <Loader size={14} className={styles.spin} /> : <Upload size={14} />}
+                    {uploadingFile ? 'מעלה...' : 'העלה מסמך'}
+                  </button>
+                  <input ref={fileRef} type="file" hidden onChange={handleFileUpload}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
+                </div>
+                {otherDocs.length === 0 ? (
+                  <div className={styles.empty}><p>אין מסמכים בתיק זה</p></div>
+                ) : (
+                  <div className={styles.docsList}>
+                    {otherDocs.map(d => (
+                      <div key={d.id} className={styles.docRow}>
+                        <FileText size={16} className={styles.docIcon} />
+                        <div className={styles.docMain}>
+                          <div className={styles.docName}>{d.name}</div>
+                          <div className={styles.docMeta}>
+                            {(d.file_type || 'FILE').toUpperCase()} · {formatSize(d.size_bytes)} · {formatDateShort(d.uploaded_at)}
+                          </div>
+                        </div>
+                        {d.drive_view_url && (
+                          <button className={styles.docBtn} onClick={() => setViewerDoc(d)} title="צפייה">
+                            <ExternalLink size={14} />
+                          </button>
+                        )}
+                        {d.uploaded_by_dayan_id === loggedDayan.id && (
+                          <button className={styles.docBtn} onClick={() => handleDeleteDoc(d.id)} title="מחק">
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {caseTab === 'timeline' && (
+              <CaseTimeline caseId={selectedCase.id} />
+            )}
+          </div>
         </div>
       )}
 
@@ -248,6 +454,8 @@ export default function DayanPortal() {
           </div>
         </div>
       )}
+
+      {viewerDoc && <DocViewer doc={viewerDoc} onClose={() => setViewerDoc(null)} />}
     </div>
   );
 }

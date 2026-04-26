@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.core.database import Base
 
 # Import all models so Alembic detects them
-from app.models import user, dayan, lawyer, case, document, payment, schedule, notification, case_event  # noqa
+from app.models import user, dayan, lawyer, case, document, payment, schedule, notification, case_event, protocol  # noqa
 
 config = context.config
 settings = get_settings()

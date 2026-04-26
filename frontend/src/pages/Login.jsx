@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scale, Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { api } from '../api/client';
 import styles from './Login.module.css';
 
 export default function Login() {
@@ -40,9 +39,11 @@ export default function Login() {
       <div className={styles.bg} />
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.logo}><Scale size={26} strokeWidth={1.5} /></div>
-          <h1 className={styles.title}>כרמי המשפט</h1>
-          <p className={styles.sub}>בית דין לממונות</p>
+          <img src="/logo.png" alt="DinLink" className={styles.logo} />
+          <h1 className={styles.title}>
+            <span className={styles.titleDin}>Din</span><span className={styles.titleLink}>Link</span>
+          </h1>
+          <p className={styles.sub}>הפלטפורמה הדיגיטלית לבתי הדין</p>
         </div>
 
         <div className={styles.tabs}>

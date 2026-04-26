@@ -34,10 +34,13 @@ export default function DayanLogin() {
 
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <Gavel size={28} strokeWidth={1.5} />
+          <img src="/logo.png" alt="DinLink" className={styles.brandLogo} />
+          <div className={styles.brand}>
+            <span className={styles.brandDin}>Din</span><span className={styles.brandLink}>Link</span>
           </div>
-          <h1 className={styles.title}>כניסת דיינים</h1>
+          <div className={styles.roleBadge}>
+            <Gavel size={14} /> כניסת דיינים
+          </div>
           <p className={styles.sub}>הזן את פרטי הכניסה שלך</p>
         </div>
 
