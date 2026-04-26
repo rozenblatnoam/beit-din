@@ -1,8 +1,11 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Search, FileText, Upload, Trash2, ExternalLink, ArrowLeft, User, FolderOpen, Calendar } from 'lucide-react';
+import { Briefcase, Search, FileText, Upload, Trash2, ExternalLink, ArrowLeft, User, FolderOpen, Calendar, Clock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../api/client';
+import CaseTimeline from '../components/CaseTimeline';
+import DocViewer from '../components/DocViewer';
+import InboxWidget from '../components/InboxWidget';
 import styles from './LawyerPortal.module.css';
 
 const statusMap = {
@@ -39,6 +42,7 @@ export default function LawyerPortal() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [viewerDoc, setViewerDoc] = useState(null);
   const fileRef = useRef(null);
 
   if (!loggedLawyer) {
@@ -134,6 +138,8 @@ export default function LawyerPortal() {
           </div>
         </div>
       </div>
+
+      {!selected && <InboxWidget />}
 
       {!selected ? (
         <>
@@ -241,6 +247,11 @@ export default function LawyerPortal() {
           </div>
 
           <div className={`card ${styles.docsCard}`}>
+            <h3 className={styles.sectionTitle}><Clock size={16} /> ציר זמן</h3>
+            <CaseTimeline caseId={selected.id} />
+          </div>
+
+          <div className={`card ${styles.docsCard}`}>
             <div className={styles.docsHeader}>
               <h3 className={styles.sectionTitle}><FileText size={16} /> מסמכים ({docs.length})</h3>
               <button className={styles.uploadBtn} onClick={handleFilePick} disabled={uploading}>
@@ -271,9 +282,9 @@ export default function LawyerPortal() {
                     </div>
                     <div className={styles.docActions}>
                       {d.drive_view_url && (
-                        <a href={d.drive_view_url} target="_blank" rel="noreferrer" className={styles.docBtn} title="צפייה">
+                        <button className={styles.docBtn} onClick={() => setViewerDoc(d)} title="צפייה">
                           <ExternalLink size={14} />
-                        </a>
+                        </button>
                       )}
                       <button className={styles.docBtn} onClick={() => handleDelete(d.id)} title="מחיקה">
                         <Trash2 size={14} />
@@ -286,6 +297,8 @@ export default function LawyerPortal() {
           </div>
         </>
       )}
+
+      {viewerDoc && <DocViewer doc={viewerDoc} onClose={() => setViewerDoc(null)} />}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { User, LogOut, Menu, X, Gavel, ShieldCheck, Briefcase } from 'lucide-react';
+import { User, LogOut, Menu, X, Gavel, ShieldCheck, Briefcase, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import NotificationBell from './NotificationBell';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -63,6 +64,18 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navActions}>
+          {(isLoggedIn || loggedDayan || loggedLawyer) && (
+            <>
+              <button
+                className={styles.iconBtn}
+                onClick={() => navigate('/search')}
+                title="חיפוש"
+              >
+                <Search size={16} />
+              </button>
+              <NotificationBell />
+            </>
+          )}
           {loggedDayan ? (
             <div className={styles.userMenu}>
               <div className={styles.userBadge}>

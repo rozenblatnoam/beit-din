@@ -8,6 +8,8 @@ from app.models.document import Document
 from app.models.user import User
 from app.schemas.document import DocumentOut
 from app.services import google_drive
+from app.services import events as events_service
+from app.services import notifications as notif_service
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -50,6 +52,24 @@ def upload_document(
     db.add(doc)
     db.commit()
     db.refresh(doc)
+
+    events_service.add_event(
+        db, case_id, "document_uploaded",
+        title="הועלה מסמך", description=f"{file.filename}",
+        actor_type="user", actor_id=current_user.id,
+    )
+    if case.dayan_id:
+        notif_service.notify_dayan(
+            db, case.dayan_id,
+            title="מסמך חדש בתיק", body=f"הוגש מסמך חדש לתיק {case.case_number}: {file.filename}",
+            link="/dayan/portal", case_id=case_id,
+        )
+    if case.lawyer_id:
+        notif_service.notify_lawyer(
+            db, case.lawyer_id,
+            title="מסמך חדש בתיק", body=f"הוגש מסמך חדש לתיק {case.case_number}: {file.filename}",
+            link="/lawyer/portal", case_id=case_id,
+        )
     return doc
 
 

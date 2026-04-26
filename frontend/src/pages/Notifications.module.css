@@ -1,0 +1,124 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--navy);
+}
+
+.headerLeft h2 {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 22px;
+  margin: 0;
+}
+
+.markAllBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.markAllBtn:hover { background: var(--bg-secondary); color: var(--navy); }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tabActive {
+  color: var(--navy);
+  border-bottom-color: var(--gold-mid);
+  font-weight: 600;
+}
+
+.card { padding: 0; overflow: hidden; }
+
+.list { display: flex; flex-direction: column; }
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: white;
+  text-align: right;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.item:hover { background: var(--bg-secondary); }
+.item:last-child { border-bottom: none; }
+
+.itemUnread { background: rgba(212, 175, 55, 0.06); }
+.itemUnread:hover { background: rgba(212, 175, 55, 0.12); }
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold-mid);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.itemMain { flex: 1; min-width: 0; }
+
+.itemTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 3px;
+}
+
+.itemBody {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}

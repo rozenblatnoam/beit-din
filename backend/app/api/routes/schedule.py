@@ -9,6 +9,9 @@ from app.models.case import Case
 from app.schemas.schedule import ScheduleCreate, ScheduleUpdate, ScheduleOut
 from app.schemas.dayan import AvailabilityUpdate, AvailabilityOut
 from app.services import email as email_service
+from app.services import events as events_service
+from app.services import notifications as notif_service
+from app.services.jewish_calendar import check_date
 from app.models.user import User
 import json
 
@@ -78,10 +81,17 @@ def get_availability(dayan_id: int, db: Session = Depends(get_db), _=Depends(req
 
 
 @router.post("/", response_model=ScheduleOut, status_code=201)
-def create_hearing(body: ScheduleCreate, db: Session = Depends(get_db), admin=Depends(require_admin)):
+def create_hearing(body: ScheduleCreate, force: bool = False, db: Session = Depends(get_db), admin=Depends(require_admin)):
     case = db.query(Case).filter(Case.id == body.case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="תיק לא נמצא")
+
+    blocked = check_date(body.scheduled_at)
+    if blocked and not force:
+        raise HTTPException(
+            status_code=400,
+            detail=f"לא ניתן לקבוע דיון בתאריך זה ({blocked}). שלח force=true כדי לעקוף.",
+        )
 
     hearing = Schedule(**body.model_dump())
     db.add(hearing)
@@ -94,6 +104,31 @@ def create_hearing(body: ScheduleCreate, db: Session = Depends(get_db), admin=De
     if user:
         email_service.send_hearing_reminder(user.email, user.name, case.case_number, str(body.scheduled_at))
 
+    events_service.add_event(
+        db, case.id, "hearing_scheduled",
+        title=f"נקבע {body.type or 'דיון'}",
+        description=f"מועד: {body.scheduled_at}. {body.label or ''}",
+        actor_type="admin",
+    )
+    if user:
+        notif_service.notify_user(
+            db, user.id,
+            title="נקבע דיון בתיק", body=f"דיון בתיק {case.case_number} נקבע ל-{body.scheduled_at}.",
+            link="/dashboard", case_id=case.id,
+        )
+    if hearing.dayan_id:
+        notif_service.notify_dayan(
+            db, hearing.dayan_id,
+            title="נקבע דיון", body=f"נקבע דיון לתיק {case.case_number} ב-{body.scheduled_at}.",
+            link="/dayan/portal", case_id=case.id,
+        )
+    if case.lawyer_id:
+        notif_service.notify_lawyer(
+            db, case.lawyer_id,
+            title="נקבע דיון בתיק", body=f"דיון בתיק {case.case_number} נקבע ל-{body.scheduled_at}.",
+            link="/lawyer/portal", case_id=case.id,
+        )
+
     return hearing
 
 
@@ -104,3 +139,14 @@ def delete_hearing(hearing_id: int, db: Session = Depends(get_db), _=Depends(req
         raise HTTPException(status_code=404, detail="דיון לא נמצא")
     db.delete(hearing)
     db.commit()
+
+
+@router.get("/check-date")
+def check_hearing_date(date: str, _=Depends(require_admin)):
+    """Check if a date is a Shabbat / Yom Tov / fast day. Returns {blocked: str|null}."""
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(date.replace("Z", "+00:00"))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="פורמט תאריך לא תקין")
+    return {"blocked": check_date(dt)}

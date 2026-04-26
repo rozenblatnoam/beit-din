@@ -407,3 +407,13 @@
   font-size: 0.72rem;
   color: var(--text-muted);
 }
+
+.warning {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #8B6914;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin: 0.75rem 0;
+}

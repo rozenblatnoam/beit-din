@@ -11,6 +11,8 @@ from app.schemas.dayan import DayanCreate, DayanOut, DayanUpdate
 from app.schemas.lawyer import LawyerCreate, LawyerOut, LawyerUpdate
 from app.schemas.case import CaseOut, CaseUpdate
 from app.services import email as email_service
+from app.services import events as events_service
+from app.services import notifications as notif_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -123,16 +125,68 @@ def update_case(case_id: int, body: CaseUpdate, db: Session = Depends(get_db), a
         raise HTTPException(status_code=404, detail="תיק לא נמצא")
 
     prev_dayan_id = case.dayan_id
+    prev_lawyer_id = case.lawyer_id
+    prev_status = case.status
     for field, value in body.model_dump(exclude_none=True).items():
         setattr(case, field, value)
     db.commit()
     db.refresh(case)
 
+    user = db.query(User).filter(User.id == case.user_id).first()
+
     if body.dayan_id and body.dayan_id != prev_dayan_id:
         dayan = db.query(Dayan).filter(Dayan.id == body.dayan_id).first()
-        user = db.query(User).filter(User.id == case.user_id).first()
         if dayan and user:
             email_service.send_dayan_assigned(user.email, user.name, case.case_number, dayan.name)
+            events_service.add_event(
+                db, case.id, "dayan_assigned",
+                title=f"שובץ דיין", description=f"הדיין {dayan.name} שובץ לתיק.",
+                actor_type="admin", actor_id=admin.id,
+            )
+            notif_service.notify_user(
+                db, user.id,
+                title="שובץ דיין לתיק", body=f"הדיין {dayan.name} שובץ לתיק {case.case_number}.",
+                link="/dashboard", case_id=case.id,
+            )
+            notif_service.notify_dayan(
+                db, dayan.id,
+                title="שובצת לתיק חדש", body=f"שובצת לתיק {case.case_number} - {case.subject}.",
+                link="/dayan/portal", case_id=case.id,
+            )
+
+    if body.lawyer_id and body.lawyer_id != prev_lawyer_id:
+        lawyer = db.query(Lawyer).filter(Lawyer.id == body.lawyer_id).first()
+        if lawyer and user:
+            events_service.add_event(
+                db, case.id, "lawyer_assigned",
+                title=f"שובץ עו\"ד/טו\"ר", description=f"{lawyer.name} שובץ לתיק.",
+                actor_type="admin", actor_id=admin.id,
+            )
+            notif_service.notify_user(
+                db, user.id,
+                title="שובץ ייצוג לתיק", body=f"{lawyer.name} שובץ לייצוג בתיק {case.case_number}.",
+                link="/dashboard", case_id=case.id,
+            )
+            notif_service.notify_lawyer(
+                db, lawyer.id,
+                title="שובצת לתיק חדש", body=f"שובצת לתיק {case.case_number} - {case.subject}.",
+                link="/lawyer/portal", case_id=case.id,
+            )
+
+    if body.status and body.status != prev_status:
+        events_service.add_event(
+            db, case.id, "status_changed",
+            title=f"סטטוס תיק שונה",
+            description=f"הסטטוס שונה ל-{body.status.value if hasattr(body.status, 'value') else body.status}.",
+            actor_type="admin", actor_id=admin.id,
+        )
+        if user:
+            notif_service.notify_user(
+                db, user.id,
+                title="סטטוס התיק עודכן",
+                body=f"הסטטוס של תיק {case.case_number} עודכן.",
+                link="/dashboard", case_id=case.id,
+            )
 
     return case
 

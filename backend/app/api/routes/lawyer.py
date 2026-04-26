@@ -11,6 +11,8 @@ from app.models.lawyer import Lawyer
 from app.schemas.document import DocumentOut
 from app.schemas.lawyer import LawyerCaseOut
 from app.services import google_drive
+from app.services import events as events_service
+from app.services import notifications as notif_service
 
 router = APIRouter(prefix="/lawyer", tags=["lawyer"])
 
@@ -104,6 +106,23 @@ def upload_case_document(
     db.add(doc)
     db.commit()
     db.refresh(doc)
+
+    events_service.add_event(
+        db, case_id, "document_uploaded",
+        title="הועלה מסמך ע\"י עו\"ד/טו\"ר", description=f"{file.filename}",
+        actor_type="lawyer", actor_id=lawyer.id,
+    )
+    notif_service.notify_user(
+        db, case.user_id,
+        title="מסמך חדש בתיק", body=f"{lawyer.name} הוסיף מסמך לתיק {case.case_number}: {file.filename}",
+        link="/dashboard", case_id=case_id,
+    )
+    if case.dayan_id:
+        notif_service.notify_dayan(
+            db, case.dayan_id,
+            title="מסמך חדש בתיק", body=f"הוגש מסמך לתיק {case.case_number}: {file.filename}",
+            link="/dayan/portal", case_id=case_id,
+        )
     return doc
 
 

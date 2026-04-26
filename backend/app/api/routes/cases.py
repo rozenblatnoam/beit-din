@@ -8,6 +8,8 @@ from app.models.case import Case
 from app.models.user import User
 from app.schemas.case import CaseCreate, CaseOut
 from app.services import email as email_service
+from app.services import events as events_service
+from app.services import notifications as notif_service
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -31,6 +33,16 @@ def create_case(body: CaseCreate, db: Session = Depends(get_db), current_user: U
     db.commit()
     db.refresh(case)
     email_service.send_case_opened(current_user.email, current_user.name, case.case_number)
+    events_service.add_event(
+        db, case.id, "case_opened",
+        title=f"תיק נפתח", description=f"תיק {case.case_number} נפתח על ידי {current_user.name}",
+        actor_type="user", actor_id=current_user.id,
+    )
+    notif_service.notify_user(
+        db, current_user.id,
+        title="תיק חדש נפתח", body=f"תיק מספר {case.case_number} נפתח בהצלחה במערכת.",
+        link=f"/dashboard", case_id=case.id,
+    )
     return case
 
 

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Plus, ChevronLeft } from 'lucide-react';
+import InboxWidget from '../components/InboxWidget';
 import styles from './Dashboard.module.css';
 
 const statusMap = {
@@ -41,6 +42,8 @@ export default function Dashboard() {
           <Plus size={16} /> פתיחת תיק חדש
         </button>
       </div>
+
+      <InboxWidget />
 
       {/* STATS */}
       <div className={styles.statsGrid}>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Upload, Filter, Download, Eye, Trash2, Loader } from 'lucide-react';
+import DocViewer from '../components/DocViewer';
 import styles from './Documents.module.css';
 
 const TYPE_ICONS = { pdf: '📄', docx: '📝', doc: '📝', img: '🖼', png: '🖼', jpg: '🖼', jpeg: '🖼', default: '📁' };
@@ -21,6 +22,7 @@ export default function Documents() {
   const [filter, setFilter] = useState('all');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [viewerDoc, setViewerDoc] = useState(null);
   const fileRef = useRef();
 
   useEffect(() => {
@@ -100,9 +102,9 @@ export default function Documents() {
             </div>
             <div className={styles.docActions}>
               {doc.drive_view_url && (
-                <a href={doc.drive_view_url} target="_blank" rel="noreferrer" className="btn-ghost" title="צפייה">
+                <button className="btn-ghost" title="צפייה" onClick={() => setViewerDoc(doc)}>
                   <Eye size={14} />
-                </a>
+                </button>
               )}
               <button className="btn-ghost" title="הורדה"
                 onClick={() => doc.drive_view_url && window.open(doc.drive_view_url, '_blank')}>
@@ -129,6 +131,8 @@ export default function Documents() {
           <div>{filter === 'all' ? 'אין מסמכים — העלה מסמך ראשון' : 'אין מסמכים לתיק זה'}</div>
         </div>
       )}
+
+      {viewerDoc && <DocViewer doc={viewerDoc} onClose={() => setViewerDoc(null)} />}
     </div>
   );
 }

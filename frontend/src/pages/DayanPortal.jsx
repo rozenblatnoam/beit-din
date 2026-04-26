@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Gavel, Calendar, Clock, CheckSquare, Square, Save } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../api/client';
+import InboxWidget from '../components/InboxWidget';
 import styles from './DayanPortal.module.css';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
@@ -120,6 +121,8 @@ export default function DayanPortal() {
           </div>
         </div>
       </div>
+
+      <InboxWidget />
 
       <div className={styles.tabs}>
         {[

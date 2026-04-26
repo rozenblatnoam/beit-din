@@ -15,6 +15,8 @@ import DayanPortal from './pages/DayanPortal';
 import LawyerLogin from './pages/LawyerLogin';
 import LawyerPortal from './pages/LawyerPortal';
 import AdminScheduler from './pages/AdminScheduler';
+import Notifications from './pages/Notifications';
+import Search from './pages/Search';
 import './styles/global.css';
 
 export default function App() {
@@ -45,6 +47,8 @@ export default function App() {
             <Route path="/lawyer" element={<LawyerLogin />} />
             <Route path="/lawyer/portal" element={<LawyerPortal />} />
             <Route path="/admin/scheduler" element={<AdminScheduler />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/search" element={<Search />} />
           </Routes>
         </main>
         <Footer />

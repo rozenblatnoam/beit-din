@@ -99,7 +99,7 @@
   font-size: 13px;
 }
 
-.logoutBtn {
+.logoutBtn, .iconBtn {
   background: none;
   border: 1px solid rgba(255,255,255,0.15);
   color: #94a3b8;
@@ -110,9 +110,10 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition);
+  cursor: pointer;
 }
 
-.logoutBtn:hover {
+.logoutBtn:hover, .iconBtn:hover {
   background: rgba(255,255,255,0.08);
   color: white;
 }

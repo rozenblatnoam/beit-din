@@ -39,6 +39,8 @@ export default function AdminScheduler() {
   const [newItem, setNewItem] = useState({ case_id: '', dayan_id: '', date: '', time: '10:00', type: 'hearing', label: '' });
   const [added, setAdded] = useState(false);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
+  const [dateWarning, setDateWarning] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -55,6 +57,14 @@ export default function AdminScheduler() {
         .catch(() => {});
     });
   }, [dayans, isAdmin]);
+
+  useEffect(() => {
+    if (!newItem.date) { setDateWarning(''); return; }
+    const iso = toISODateTime(newItem.date, newItem.time || '10:00');
+    api.get(`/schedule/check-date?date=${encodeURIComponent(iso)}`)
+      .then((r) => setDateWarning(r.blocked || ''))
+      .catch(() => setDateWarning(''));
+  }, [newItem.date, newItem.time]);
 
   if (!isAdmin) {
     return (
@@ -82,11 +92,13 @@ export default function AdminScheduler() {
     }
   };
 
-  const handleAddSchedule = async () => {
+  const handleAddSchedule = async (force = false) => {
     if (!newItem.case_id || !newItem.dayan_id || !newItem.date || !newItem.label) return;
     setLoadingSchedule(true);
+    setScheduleError('');
     try {
-      await addScheduleItem({
+      const path = force ? '/schedule/?force=true' : '/schedule/';
+      const created = await api.post(path, {
         case_id: Number(newItem.case_id),
         dayan_id: Number(newItem.dayan_id),
         scheduled_at: toISODateTime(newItem.date, newItem.time),
@@ -95,8 +107,12 @@ export default function AdminScheduler() {
       });
       setAdded(true);
       setNewItem({ case_id: '', dayan_id: '', date: '', time: '10:00', type: 'hearing', label: '' });
+      setDateWarning('');
       setTimeout(() => setAdded(false), 2000);
+      // best-effort refresh
+      refreshCases && refreshCases();
     } catch (e) {
+      setScheduleError(e?.detail || 'שגיאה בהוספת ישיבה');
       console.error('שגיאה בהוספת ישיבה', e);
     } finally {
       setLoadingSchedule(false);
@@ -301,10 +317,20 @@ export default function AdminScheduler() {
                   onChange={e => setNewItem(p => ({ ...p, label: e.target.value }))} />
               </div>
             </div>
-            <button className={styles.addBtn} onClick={handleAddSchedule} disabled={loadingSchedule}>
+            {dateWarning && (
+              <div className={styles.warning}>
+                ⚠️ התאריך הנבחר הוא {dateWarning}. ניתן בכל זאת לשבץ אם תאשר.
+              </div>
+            )}
+            {scheduleError && (
+              <div className={styles.warning} style={{ background: '#fee', borderColor: '#fcc', color: '#c33' }}>
+                {scheduleError}
+              </div>
+            )}
+            <button className={styles.addBtn} onClick={() => handleAddSchedule(!!dateWarning)} disabled={loadingSchedule}>
               {added ? '✓ נוסף בהצלחה!' : loadingSchedule
                 ? <Loader size={14} />
-                : <><CalendarPlus size={14} /> הוסף ישיבה</>}
+                : <><CalendarPlus size={14} /> {dateWarning ? 'שבץ בכל זאת' : 'הוסף ישיבה'}</>}
             </button>
           </div>
 
