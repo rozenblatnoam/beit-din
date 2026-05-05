@@ -340,15 +340,18 @@ print('Password reset')
 | Method | Path | תיאור | הרשאה |
 |--------|------|-------|--------|
 | POST | `/auth/register` | הרשמת משתמש חדש | פתוח |
-| POST | `/auth/login` | התחברות משתמש | פתוח |
-| POST | `/auth/refresh` | חידוש access token | refresh token |
+| POST | `/auth/login` | התחברות משתמש — מחזיר access_token + מגדיר httpOnly cookie לרענון | פתוח |
+| POST | `/auth/refresh` | חידוש access token — קורא מ-cookie `rt_user` (אוטומטי) | cookie / body |
+| POST | `/auth/logout` | ניקוי cookie רענון | פתוח |
 | GET  | `/auth/google` | התחלת OAuth | פתוח |
 | GET  | `/auth/google/callback` | סיום OAuth | Google |
-| POST | `/auth/dayan/login` | התחברות דיין | פתוח |
-| POST | `/auth/dayan/refresh` | חידוש טוקן דיין | refresh token |
+| POST | `/auth/dayan/login` | התחברות דיין — מגדיר httpOnly cookie `rt_dayan` | פתוח |
+| POST | `/auth/dayan/refresh` | חידוש טוקן דיין — קורא מ-cookie `rt_dayan` | cookie / body |
+| POST | `/auth/dayan/logout` | ניקוי cookie דיין | פתוח |
 | GET  | `/auth/dayan/google` | OAuth דיין | פתוח |
-| POST | `/auth/lawyer/login` | התחברות עו"ד/טו"ר | פתוח |
-| POST | `/auth/lawyer/refresh` | חידוש טוקן עו"ד | refresh token |
+| POST | `/auth/lawyer/login` | התחברות עו"ד/טו"ר — מגדיר httpOnly cookie `rt_lawyer` | פתוח |
+| POST | `/auth/lawyer/refresh` | חידוש טוקן עו"ד — קורא מ-cookie `rt_lawyer` | cookie / body |
+| POST | `/auth/lawyer/logout` | ניקוי cookie עו"ד | פתוח |
 | GET  | `/auth/lawyer/google` | OAuth עו"ד | פתוח |
 
 ### Cases (משתמש)
@@ -373,7 +376,7 @@ print('Password reset')
 |--------|------|-------|
 | POST | `/payments/` | יצירת חיוב חדש (מקבל URL להפנייה ל-Hyp) |
 | GET  | `/payments/my` | תשלומים שלי |
-| POST | `/payments/webhook` | webhook מ-Hyp (פתוח, מאומת בחתימה) |
+| POST | `/payments/webhook` | webhook מ-Hyp — מאומת ב-HMAC signature (`X-Hyp-Signature`) + idempotent |
 
 ### Lawyer Portal
 
@@ -493,6 +496,8 @@ REFRESH_TOKEN_EXPIRE_DAYS=30
 GOOGLE_CLIENT_ID=REPLACE_ME
 GOOGLE_CLIENT_SECRET=REPLACE_ME
 GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+GOOGLE_REDIRECT_URI_DAYAN=http://localhost:8000/auth/dayan/google/callback
+GOOGLE_REDIRECT_URI_LAWYER=http://localhost:8000/auth/lawyer/google/callback
 
 # Google Drive (אחסון מסמכים)
 GOOGLE_DRIVE_FOLDER_ID=REPLACE_ME
@@ -546,9 +551,10 @@ BACKEND_URL=http://localhost:8000
 - [ ] ליצור `SECRET_KEY` חזק (לפחות 32 תווים אקראיים): `python -c "import secrets; print(secrets.token_urlsafe(48))"`
 - [ ] להחליף את כל הסיסמאות בקובץ הזה (`admin1234`, `pass1234`, `client1234`, `strongpassword`)
 - [ ] להגביל CORS ב-[backend/app/main.py](backend/app/main.py) ל-domain האמיתי בלבד (להסיר את רשימת ה-localhost)
-- [ ] להשתמש ב-HTTPS (Caddy / Nginx + Let's Encrypt)
+- [ ] להשתמש ב-HTTPS (Caddy / Nginx + Let's Encrypt) — **נדרש** כדי ש-httpOnly cookies יעבדו עם `Secure=True`
 - [ ] לוודא ש-`POSTGRES_PASSWORD` ב-docker-compose מוגדר ממשתנה סביבה ולא בקוד
 - [ ] לחסום את פורט 5433 מבחוץ (רק הבקאנד צריך גישה ל-DB)
+- [ ] לעדכן `APP_ENV=production` בסביבת הפרודקשן (מפעיל `Secure` על cookies ומסתיר את `/docs`)
 
 ### תשתית
 - **המלצת hosting:** Hetzner CX22 (~€3.92/חודש, 2 vCPU / 4GB RAM)
@@ -578,17 +584,21 @@ BACKEND_URL=http://localhost:8000
 
 ### תקשורת ב-JWT
 - כל קריאה ל-API דורשת `Authorization: Bearer <access_token>`
-- אם הטוקן פג (HTTP 401) — ה-frontend מחדש אוטומטית עם ה-refresh_token
+- `access_token` נשמר ב-`localStorage` (תוקף: 60 דקות)
+- `refresh_token` נשמר כ-**httpOnly cookie** (JavaScript לא יכול לקרוא אותו — מגן מ-XSS)
+- אם הטוקן פג (HTTP 401) — ה-frontend קורא לנקודת הרענון המתאימה לתפקיד; ה-cookie נשלח אוטומטית
 - אם גם זה נכשל — מנתב אוטומטית ל-`/login`
+- בסביבת dev: Vite מפנה כל קריאת API דרך Proxy לבקאנד (localhost:8000) כך ש-cookies עובדים ללא HTTPS
 
 ---
 
-**גרסה:** 1.3
-**תאריך עדכון:** 2026-04-26
+**גרסה:** 1.4
+**תאריך עדכון:** 2026-05-05
 **מחבר:** Noam Rozenblat
 
 ### היסטוריית גרסאות
 
+- **1.4** (2026-05-05) — תיקוני אבטחה: httpOnly cookies לרענון טוקנים, Vite proxy לעבודה בסביבת dev, אימות HMAC ל-webhook תשלומים + idempotency, OAuth redirect URIs ב-.env, הגבלת CORS methods, Swagger מוסתר בפרודקשן, הוספת endpoints `/auth/*/logout`
 - **1.3** (2026-04-26) — פרוטוקול ופסק דין נוצרים כ-Google Doc (חוויה דמוית Word) עם fallback ל-textarea כש-Drive לא מוגדר
 - **1.2** (2026-04-26) — פרוטוקול דיון ופסק דין בפורטל הדיינים, הקלטת דיונים מהדפדפן, מיתוג DinLink במסכי הכניסה
 - **1.1** (2026-04-26) — הוספת התראות, ציר זמן, חיפוש מאוחד, Inbox/Action Items, לוח עברי, PDF Viewer מובנה

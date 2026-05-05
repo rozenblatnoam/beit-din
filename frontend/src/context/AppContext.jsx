@@ -16,23 +16,36 @@ export function AppProvider({ children }) {
 
   const isLoggedIn = !!user;
 
-  // ─── Bootstrap: restore session from localStorage ───
+  // ─── Bootstrap: restore session from localStorage, silent-refresh if needed ───
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    const savedUser = localStorage.getItem("user");
-    const savedDayan = localStorage.getItem("dayan");
+    const token     = localStorage.getItem("access_token");
+    const savedUser   = localStorage.getItem("user");
+    const savedDayan  = localStorage.getItem("dayan");
     const savedLawyer = localStorage.getItem("lawyer");
 
-    if (token && savedUser) {
-      const u = JSON.parse(savedUser);
-      setUser(u);
-      setIsAdmin(u.is_admin || false);
-    } else if (token && savedDayan) {
-      setLoggedDayan(JSON.parse(savedDayan));
-    } else if (token && savedLawyer) {
-      setLoggedLawyer(JSON.parse(savedLawyer));
-    }
-    setLoading(false);
+    const restore = async () => {
+      if (token && savedUser) {
+        const u = JSON.parse(savedUser);
+        setUser(u);
+        setIsAdmin(u.is_admin || false);
+      } else if (token && savedDayan) {
+        setLoggedDayan(JSON.parse(savedDayan));
+      } else if (token && savedLawyer) {
+        setLoggedLawyer(JSON.parse(savedLawyer));
+      } else if (savedUser || savedDayan || savedLawyer) {
+        // No access_token but have role data → try silent refresh via httpOnly cookie
+        const ok = await api.silentRefresh();
+        if (ok) {
+          if (savedUser)   { const u = JSON.parse(savedUser);  setUser(u); setIsAdmin(u.is_admin || false); }
+          else if (savedDayan)  setLoggedDayan(JSON.parse(savedDayan));
+          else if (savedLawyer) setLoggedLawyer(JSON.parse(savedLawyer));
+        } else {
+          localStorage.clear();
+        }
+      }
+      setLoading(false);
+    };
+    restore();
   }, []);
 
   // ─── Load user data when logged in ──────────────────
@@ -56,7 +69,6 @@ export function AppProvider({ children }) {
   const loginDayan = useCallback(async (email, password) => {
     const data = await api.post("/auth/dayan/login", { email, password });
     localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
     localStorage.setItem("dayan", JSON.stringify(data.dayan));
     setLoggedDayan(data.dayan);
   }, []);
@@ -64,12 +76,19 @@ export function AppProvider({ children }) {
   const loginLawyer = useCallback(async (email, password) => {
     const data = await api.post("/auth/lawyer/login", { email, password });
     localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
     localStorage.setItem("lawyer", JSON.stringify(data.lawyer));
     setLoggedLawyer(data.lawyer);
   }, []);
 
   const logout = useCallback(() => {
+    // Clear httpOnly refresh cookies from backend
+    const role = localStorage.getItem("dayan") ? "dayan"
+               : localStorage.getItem("lawyer") ? "lawyer" : "user";
+    const logoutUrl = role === "dayan" ? "/auth/dayan/logout"
+                    : role === "lawyer" ? "/auth/lawyer/logout"
+                    : "/auth/logout";
+    fetch(logoutUrl, { method: "POST", credentials: "include" }).catch(() => {});
+
     localStorage.clear();
     setUser(null);
     setLoggedDayan(null);
@@ -83,7 +102,7 @@ export function AppProvider({ children }) {
 
   function _persistAuth(data) {
     localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
+    // refresh_token is stored as httpOnly cookie by the backend — not in localStorage
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
     setIsAdmin(data.user.is_admin || false);

@@ -5,12 +5,14 @@ from app.api.routes import auth, dayan_auth, lawyer_auth, lawyer, dayan, cases, 
 
 settings = get_settings()
 
+_is_dev = settings.APP_ENV == "development"
+
 app = FastAPI(
-    title="כרמי המשפט — API",
+    title="DinLink API",
     description="בית דין לממונות — מערכת ניהול תיקים",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if _is_dev else None,
+    redoc_url="/redoc" if _is_dev else None,
 )
 
 _origins = [settings.FRONTEND_URL]
@@ -21,8 +23,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 app.include_router(auth.router)

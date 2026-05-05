@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Cookie
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 import httpx
 
 from app.core.database import get_db
@@ -16,11 +17,26 @@ settings = get_settings()
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
-GOOGLE_REDIRECT_URI_DAYAN = "http://localhost:8000/auth/dayan/google/callback"
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key="rt_dayan",
+        value=token,
+        httponly=True,
+        secure=settings.APP_ENV == "production",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        path="/auth/dayan/refresh",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(key="rt_dayan", path="/auth/dayan/refresh")
 
 
 @router.post("/login", response_model=DayanTokenResponse)
-def dayan_login(body: DayanLogin, db: Session = Depends(get_db)):
+def dayan_login(body: DayanLogin, response: Response, db: Session = Depends(get_db)):
     dayan = db.query(Dayan).filter(Dayan.email == body.email).first()
     if not dayan or not dayan.hashed_password or not verify_password(body.password, dayan.hashed_password):
         raise HTTPException(status_code=401, detail="אימייל או סיסמה שגויים")
@@ -29,12 +45,22 @@ def dayan_login(body: DayanLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(dayan.id, extra={"role": "dayan"})
     refresh_token = create_refresh_token(dayan.id)
+    _set_refresh_cookie(response, refresh_token)
     return DayanTokenResponse(access_token=access_token, refresh_token=refresh_token, dayan=DayanOut.model_validate(dayan))
 
 
 @router.post("/refresh", response_model=DayanTokenResponse)
-def dayan_refresh(body: RefreshRequest, db: Session = Depends(get_db)):
-    payload = decode_token(body.refresh_token)
+def dayan_refresh(
+    body: RefreshRequest,
+    response: Response,
+    rt_dayan: Optional[str] = Cookie(default=None),
+    db: Session = Depends(get_db),
+):
+    token = rt_dayan or body.refresh_token
+    if not token:
+        raise HTTPException(status_code=401, detail="חסר טוקן רענון")
+
+    payload = decode_token(token)
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="טוקן רענון לא תקין")
 
@@ -43,15 +69,21 @@ def dayan_refresh(body: RefreshRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="דיין לא נמצא")
 
     access_token = create_access_token(dayan.id, extra={"role": "dayan"})
-    refresh_token = create_refresh_token(dayan.id)
-    return DayanTokenResponse(access_token=access_token, refresh_token=refresh_token, dayan=DayanOut.model_validate(dayan))
+    new_refresh = create_refresh_token(dayan.id)
+    _set_refresh_cookie(response, new_refresh)
+    return DayanTokenResponse(access_token=access_token, refresh_token=new_refresh, dayan=DayanOut.model_validate(dayan))
+
+
+@router.post("/logout", status_code=204)
+def dayan_logout(response: Response):
+    _clear_refresh_cookie(response)
 
 
 @router.get("/google")
 def dayan_google_login():
     params = {
         "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI_DAYAN,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI_DAYAN,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -61,12 +93,12 @@ def dayan_google_login():
 
 
 @router.get("/google/callback", response_model=DayanTokenResponse)
-def dayan_google_callback(code: str, db: Session = Depends(get_db)):
+def dayan_google_callback(code: str, response: Response, db: Session = Depends(get_db)):
     token_resp = httpx.post(GOOGLE_TOKEN_URL, data={
         "code": code,
         "client_id": settings.GOOGLE_CLIENT_ID,
         "client_secret": settings.GOOGLE_CLIENT_SECRET,
-        "redirect_uri": GOOGLE_REDIRECT_URI_DAYAN,
+        "redirect_uri": settings.GOOGLE_REDIRECT_URI_DAYAN,
         "grant_type": "authorization_code",
     })
     token_resp.raise_for_status()
@@ -87,4 +119,5 @@ def dayan_google_callback(code: str, db: Session = Depends(get_db)):
 
     access_token = create_access_token(dayan.id, extra={"role": "dayan"})
     refresh_token = create_refresh_token(dayan.id)
+    _set_refresh_cookie(response, refresh_token)
     return DayanTokenResponse(access_token=access_token, refresh_token=refresh_token, dayan=DayanOut.model_validate(dayan))

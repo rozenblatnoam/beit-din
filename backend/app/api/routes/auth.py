@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Cookie
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from authlib.integrations.httpx_client import AsyncOAuth2Client
+from typing import Optional
 import httpx
 
 from app.core.database import get_db
@@ -19,8 +19,24 @@ GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        key="rt_user",
+        value=token,
+        httponly=True,
+        secure=settings.APP_ENV == "production",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        path="/auth/refresh",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(key="rt_user", path="/auth/refresh")
+
+
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(body: UserRegister, db: Session = Depends(get_db)):
+def register(body: UserRegister, response: Response, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(status_code=400, detail="כתובת המייל כבר רשומה במערכת")
 
@@ -38,11 +54,12 @@ def register(body: UserRegister, db: Session = Depends(get_db)):
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOut.model_validate(user))
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: UserLogin, db: Session = Depends(get_db)):
+def login(body: UserLogin, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email).first()
     if not user or not user.hashed_password or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="אימייל או סיסמה שגויים")
@@ -51,12 +68,22 @@ def login(body: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOut.model_validate(user))
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
-    payload = decode_token(body.refresh_token)
+def refresh(
+    body: RefreshRequest,
+    response: Response,
+    rt_user: Optional[str] = Cookie(default=None),
+    db: Session = Depends(get_db),
+):
+    token = rt_user or body.refresh_token
+    if not token:
+        raise HTTPException(status_code=401, detail="חסר טוקן רענון")
+
+    payload = decode_token(token)
     if payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="טוקן רענון לא תקין")
 
@@ -65,8 +92,14 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="משתמש לא נמצא")
 
     access_token = create_access_token(user.id)
-    refresh_token = create_refresh_token(user.id)
-    return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOut.model_validate(user))
+    new_refresh = create_refresh_token(user.id)
+    _set_refresh_cookie(response, new_refresh)
+    return TokenResponse(access_token=access_token, refresh_token=new_refresh, user=UserOut.model_validate(user))
+
+
+@router.post("/logout", status_code=204)
+def logout(response: Response):
+    _clear_refresh_cookie(response)
 
 
 @router.get("/google")
@@ -83,7 +116,7 @@ def google_login():
 
 
 @router.get("/google/callback", response_model=TokenResponse)
-def google_callback(code: str, db: Session = Depends(get_db)):
+def google_callback(code: str, response: Response, db: Session = Depends(get_db)):
     token_resp = httpx.post(GOOGLE_TOKEN_URL, data={
         "code": code,
         "client_id": settings.GOOGLE_CLIENT_ID,
@@ -116,4 +149,5 @@ def google_callback(code: str, db: Session = Depends(get_db)):
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token, user=UserOut.model_validate(user))

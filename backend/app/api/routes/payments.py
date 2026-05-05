@@ -11,8 +11,9 @@ from app.models.user import User
 from app.schemas.payment import PaymentCreate, PaymentOut, PaymentWebhook
 from app.services import hyp, email as email_service
 
-router = APIRouter(prefix="/payments", tags=["payments"])
 settings = get_settings()
+
+router = APIRouter(prefix="/payments", tags=["payments"])
 
 
 @router.post("/", response_model=PaymentOut, status_code=201)
@@ -54,7 +55,16 @@ def list_my_payments(db: Session = Depends(get_db), current_user: User = Depends
 
 @router.post("/webhook")
 async def payment_webhook(request: Request, db: Session = Depends(get_db)):
+    body_bytes = await request.body()
     data = await request.json()
+
+    # Validate signature if Hyp secret key is configured
+    hyp_secret = settings.HYP_SECRET_KEY
+    if hyp_secret and hyp_secret != "REPLACE_ME":
+        signature = request.headers.get("X-Hyp-Signature", "")
+        if not signature or not hyp.verify_webhook(data, signature):
+            return {"ok": False}
+
     transaction_id = data.get("TransactionId") or data.get("transaction_id")
     if not transaction_id:
         return {"ok": False}
@@ -62,6 +72,10 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     payment = db.query(Payment).filter(Payment.hyp_transaction_id == transaction_id).first()
     if not payment:
         return {"ok": False}
+
+    # Idempotency: skip if already in a terminal state
+    if payment.status == PaymentStatus.paid:
+        return {"ok": True}
 
     tx_status = data.get("Status") or data.get("status", "")
     if tx_status in ("success", "Success", "approved"):

@@ -1,7 +1,20 @@
-const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// In dev, Vite proxies all API routes to localhost:8000 (same origin → httpOnly cookies work)
+// In prod, set VITE_API_URL to the backend URL (same domain via reverse proxy)
+const BASE = import.meta.env.VITE_API_URL || "";
 
 function getToken() {
   return localStorage.getItem("access_token");
+}
+
+function setToken(token) {
+  localStorage.setItem("access_token", token);
+}
+
+// Detect which refresh endpoint to call based on stored role marker
+function _refreshUrl() {
+  if (localStorage.getItem("dayan"))  return "/auth/dayan/refresh";
+  if (localStorage.getItem("lawyer")) return "/auth/lawyer/refresh";
+  return "/auth/refresh";
 }
 
 async function request(path, options = {}) {
@@ -9,13 +22,17 @@ async function request(path, options = {}) {
   const headers = { "Content-Type": "application/json", ...options.headers };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
 
   if (res.status === 401) {
     const refreshed = await tryRefresh();
     if (refreshed) {
       headers["Authorization"] = `Bearer ${getToken()}`;
-      const retry = await fetch(`${BASE}${path}`, { ...options, headers });
+      const retry = await fetch(`${BASE}${path}`, { ...options, headers, credentials: "include" });
       if (!retry.ok) throw await retry.json();
       return retry.status === 204 ? null : retry.json();
     }
@@ -32,18 +49,18 @@ async function request(path, options = {}) {
 }
 
 async function tryRefresh() {
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (!refreshToken) return false;
   try {
-    const res = await fetch(`${BASE}/auth/refresh`, {
+    const url = _refreshUrl();
+    // No body needed — backend reads refresh token from httpOnly cookie
+    const res = await fetch(`${BASE}${url}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify({}),
+      credentials: "include",
     });
     if (!res.ok) return false;
     const data = await res.json();
-    localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
+    setToken(data.access_token);
     return true;
   } catch {
     return false;
@@ -51,11 +68,14 @@ async function tryRefresh() {
 }
 
 export const api = {
-  get: (path) => request(path),
-  post: (path, body) => request(path, { method: "POST", body: JSON.stringify(body) }),
-  put: (path, body) => request(path, { method: "PUT", body: JSON.stringify(body) }),
-  patch: (path, body) => request(path, { method: "PATCH", body: JSON.stringify(body) }),
-  delete: (path) => request(path, { method: "DELETE" }),
+  get:    (path)        => request(path),
+  post:   (path, body)  => request(path, { method: "POST",   body: body != null ? JSON.stringify(body) : undefined }),
+  put:    (path, body)  => request(path, { method: "PUT",    body: JSON.stringify(body) }),
+  patch:  (path, body)  => request(path, { method: "PATCH",  body: JSON.stringify(body) }),
+  delete: (path)        => request(path, { method: "DELETE" }),
+
+  silentRefresh: tryRefresh,
+  setToken,
 
   uploadFile: async (path, formData) => {
     const token = getToken();
@@ -63,12 +83,13 @@ export const api = {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
+      credentials: "include",
     });
     if (!res.ok) throw await res.json().catch(() => ({ detail: "שגיאת העלאה" }));
     return res.json();
   },
 
-  googleLoginUrl: () => `${BASE}/auth/google`,
+  googleLoginUrl:      () => `${BASE}/auth/google`,
   googleDayanLoginUrl: () => `${BASE}/auth/dayan/google`,
-  googleLawyerLoginUrl: () => `${BASE}/auth/lawyer/google`,
+  googleLawyerLoginUrl:() => `${BASE}/auth/lawyer/google`,
 };

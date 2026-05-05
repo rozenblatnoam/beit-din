@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
+    GOOGLE_REDIRECT_URI_DAYAN: str = "http://localhost:8000/auth/dayan/google/callback"
+    GOOGLE_REDIRECT_URI_LAWYER: str = "http://localhost:8000/auth/lawyer/google/callback"
 
     # Google Drive
     GOOGLE_DRIVE_FOLDER_ID: str = ""
