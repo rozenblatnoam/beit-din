@@ -46,6 +46,7 @@ export default function App() {
             <Route path="/dayan/portal" element={<DayanPortal />} />
             <Route path="/lawyer" element={<LawyerLogin />} />
             <Route path="/lawyer/portal" element={<LawyerPortal />} />
+            <Route path="/admin" element={<AdminScheduler />} />
             <Route path="/admin/scheduler" element={<AdminScheduler />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/search" element={<Search />} />

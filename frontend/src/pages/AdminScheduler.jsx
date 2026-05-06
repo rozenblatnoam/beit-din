@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, UserCheck, Calendar, Plus, Trash2, CalendarPlus, ChevronDown, Loader } from 'lucide-react';
+import { ShieldCheck, UserCheck, Calendar, Plus, Trash2, CalendarPlus, ChevronDown, Loader, Users, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../api/client';
 import styles from './AdminScheduler.module.css';
@@ -35,6 +35,7 @@ export default function AdminScheduler() {
 
   const [activeTab, setActiveTab] = useState('assign');
   const [dayans, setDayans] = useState([]);
+  const [lawyers, setLawyers] = useState([]);
   const [availabilities, setAvailabilities] = useState({});
   const [newItem, setNewItem] = useState({ case_id: '', dayan_id: '', date: '', time: '10:00', type: 'hearing', label: '' });
   const [added, setAdded] = useState(false);
@@ -42,9 +43,22 @@ export default function AdminScheduler() {
   const [dateWarning, setDateWarning] = useState('');
   const [scheduleError, setScheduleError] = useState('');
 
+  const emptyDayan = { email: '', name: '', short_name: '', specialty: '', password: '' };
+  const emptyLawyer = { email: '', name: '', short_name: '', role: 'lawyer', license_number: '', password: '' };
+  const [newDayan, setNewDayan] = useState(emptyDayan);
+  const [newLawyer, setNewLawyer] = useState(emptyLawyer);
+  const [showDayanPw, setShowDayanPw] = useState(false);
+  const [showLawyerPw, setShowLawyerPw] = useState(false);
+  const [manageLoading, setManageLoading] = useState('');
+  const [manageMsg, setManageMsg] = useState('');
+
+  const loadDayans = () => api.get('/admin/dayans').then(setDayans).catch(() => {});
+  const loadLawyers = () => api.get('/admin/lawyers').then(setLawyers).catch(() => {});
+
   useEffect(() => {
     if (!isAdmin) return;
-    api.get('/admin/dayans').then(setDayans).catch(() => {});
+    loadDayans();
+    loadLawyers();
     api.get('/admin/cases').then(() => {}).catch(() => {});
     refreshCases && refreshCases();
   }, [isAdmin]);
@@ -122,6 +136,40 @@ export default function AdminScheduler() {
   const getDayan = (id) => dayans.find(d => d.id === id);
   const getCase = (id) => cases.find(c => c.id === id);
 
+  const handleCreateDayan = async () => {
+    if (!newDayan.email || !newDayan.name || !newDayan.password) return;
+    setManageLoading('dayan'); setManageMsg('');
+    try {
+      await api.post('/admin/dayans', newDayan);
+      setNewDayan(emptyDayan);
+      setManageMsg('✓ דיין נוסף בהצלחה');
+      loadDayans();
+    } catch (e) { setManageMsg('שגיאה: ' + (e?.detail || e?.message || 'נסה שנית')); }
+    finally { setManageLoading(''); setTimeout(() => setManageMsg(''), 4000); }
+  };
+
+  const handleDeleteDayan = async (id) => {
+    if (!confirm('האם למחוק דיין זה?')) return;
+    try { await api.delete(`/admin/dayans/${id}`); loadDayans(); } catch (e) { alert('שגיאה במחיקה'); }
+  };
+
+  const handleCreateLawyer = async () => {
+    if (!newLawyer.email || !newLawyer.name || !newLawyer.password) return;
+    setManageLoading('lawyer'); setManageMsg('');
+    try {
+      await api.post('/admin/lawyers', newLawyer);
+      setNewLawyer(emptyLawyer);
+      setManageMsg('✓ עו"ד/טוען רבני נוסף בהצלחה');
+      loadLawyers();
+    } catch (e) { setManageMsg('שגיאה: ' + (e?.detail || e?.message || 'נסה שנית')); }
+    finally { setManageLoading(''); setTimeout(() => setManageMsg(''), 4000); }
+  };
+
+  const handleDeleteLawyer = async (id) => {
+    if (!confirm('האם למחוק עו"ד/טוען זה?')) return;
+    try { await api.delete(`/admin/lawyers/${id}`); loadLawyers(); } catch (e) { alert('שגיאה במחיקה'); }
+  };
+
   const dayanAvailDays = (dayanId) => {
     const avail = availabilities[dayanId];
     if (!avail) return 'לא הוגדרה';
@@ -170,6 +218,7 @@ export default function AdminScheduler() {
           { id: 'assign', label: 'שיבוץ דיין לתיק', icon: <UserCheck size={15} /> },
           { id: 'schedule', label: 'תזמון ישיבות', icon: <CalendarPlus size={15} /> },
           { id: 'overview', label: 'סקירת דיינים', icon: <Calendar size={15} /> },
+          { id: 'manage', label: 'ניהול דיינים ועו"ד', icon: <Users size={15} /> },
         ].map(t => (
           <button key={t.id}
             className={`${styles.tab} ${activeTab === t.id ? styles.tabActive : ''}`}
@@ -366,6 +415,157 @@ export default function AdminScheduler() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MANAGE TAB */}
+      {activeTab === 'manage' && (
+        <div className={styles.panel}>
+          {manageMsg && (
+            <div className={styles.warning} style={{ background: manageMsg.startsWith('✓') ? '#e8f5e9' : '#fee', borderColor: manageMsg.startsWith('✓') ? '#a5d6a7' : '#fcc', color: manageMsg.startsWith('✓') ? '#2e7d32' : '#c33', marginBottom: '1rem' }}>
+              {manageMsg}
+            </div>
+          )}
+
+          {/* Add Dayan */}
+          <div className={`card ${styles.addCard}`} style={{ marginBottom: '2rem' }}>
+            <h3 className={styles.sectionTitle}><Plus size={15} /> הוספת דיין חדש</h3>
+            <div className={styles.formGrid}>
+              <div className={styles.formField}>
+                <label>שם מלא *</label>
+                <input className={styles.input} value={newDayan.name} placeholder="הרב ישראל ישראלי"
+                  onChange={e => setNewDayan(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>שם קצר</label>
+                <input className={styles.input} value={newDayan.short_name} placeholder="ישראלי"
+                  onChange={e => setNewDayan(p => ({ ...p, short_name: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>אימייל *</label>
+                <input type="email" className={styles.input} value={newDayan.email} placeholder="dayan@example.com"
+                  onChange={e => setNewDayan(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>התמחות</label>
+                <input className={styles.input} value={newDayan.specialty} placeholder="דיני ממונות, גיור..."
+                  onChange={e => setNewDayan(p => ({ ...p, specialty: e.target.value }))} />
+              </div>
+              <div className={styles.formField} style={{ position: 'relative' }}>
+                <label>סיסמה זמנית *</label>
+                <input type={showDayanPw ? 'text' : 'password'} className={styles.input} value={newDayan.password}
+                  onChange={e => setNewDayan(p => ({ ...p, password: e.target.value }))} />
+                <button type="button" onClick={() => setShowDayanPw(v => !v)}
+                  style={{ position: 'absolute', left: '8px', top: '32px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  {showDayanPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+            <button className={styles.addBtn} onClick={handleCreateDayan} disabled={manageLoading === 'dayan'}>
+              {manageLoading === 'dayan' ? <Loader size={14} /> : <><Plus size={14} /> הוסף דיין</>}
+            </button>
+          </div>
+
+          {/* Dayans list */}
+          <div className={styles.section} style={{ marginBottom: '2.5rem' }}>
+            <h3 className={styles.sectionTitle}>דיינים רשומים ({dayans.length})</h3>
+            {dayans.length === 0 ? <div className={styles.empty}>אין דיינים רשומים</div> : (
+              <div className={`card ${styles.tableCard}`}>
+                <div className={styles.tableWrap}>
+                  <table className="data-table">
+                    <thead><tr><th>שם</th><th>אימייל</th><th>התמחות</th><th>פעיל</th><th></th></tr></thead>
+                    <tbody>
+                      {dayans.map(d => (
+                        <tr key={d.id}>
+                          <td><strong>{d.name}</strong></td>
+                          <td style={{ direction: 'ltr', textAlign: 'right' }}>{d.email}</td>
+                          <td>{d.specialty || '—'}</td>
+                          <td><span className={`badge ${d.is_active ? 'badge-open' : 'badge-closed'}`}>{d.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
+                          <td><button className={styles.delBtn} onClick={() => handleDeleteDayan(d.id)}><Trash2 size={13} /></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Add Lawyer */}
+          <div className={`card ${styles.addCard}`} style={{ marginBottom: '2rem' }}>
+            <h3 className={styles.sectionTitle}><Plus size={15} /> הוספת עו"ד / טוען רבני חדש</h3>
+            <div className={styles.formGrid}>
+              <div className={styles.formField}>
+                <label>שם מלא *</label>
+                <input className={styles.input} value={newLawyer.name} placeholder="דוד כהן"
+                  onChange={e => setNewLawyer(p => ({ ...p, name: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>שם קצר</label>
+                <input className={styles.input} value={newLawyer.short_name} placeholder="כהן"
+                  onChange={e => setNewLawyer(p => ({ ...p, short_name: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>אימייל *</label>
+                <input type="email" className={styles.input} value={newLawyer.email} placeholder="lawyer@example.com"
+                  onChange={e => setNewLawyer(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>תפקיד</label>
+                <div className={styles.selectWrap}>
+                  <select className={styles.select} value={newLawyer.role}
+                    onChange={e => setNewLawyer(p => ({ ...p, role: e.target.value }))}>
+                    <option value="lawyer">עורך דין</option>
+                    <option value="toen">טוען רבני</option>
+                  </select>
+                  <ChevronDown size={13} className={styles.selectArrow} />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label>מספר רישיון</label>
+                <input className={styles.input} value={newLawyer.license_number} placeholder="12345"
+                  onChange={e => setNewLawyer(p => ({ ...p, license_number: e.target.value }))} />
+              </div>
+              <div className={styles.formField} style={{ position: 'relative' }}>
+                <label>סיסמה זמנית *</label>
+                <input type={showLawyerPw ? 'text' : 'password'} className={styles.input} value={newLawyer.password}
+                  onChange={e => setNewLawyer(p => ({ ...p, password: e.target.value }))} />
+                <button type="button" onClick={() => setShowLawyerPw(v => !v)}
+                  style={{ position: 'absolute', left: '8px', top: '32px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  {showLawyerPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+            <button className={styles.addBtn} onClick={handleCreateLawyer} disabled={manageLoading === 'lawyer'}>
+              {manageLoading === 'lawyer' ? <Loader size={14} /> : <><Plus size={14} /> הוסף עו"ד / טוען</>}
+            </button>
+          </div>
+
+          {/* Lawyers list */}
+          <div className={styles.section}>
+            <h3 className={styles.sectionTitle}>עורכי דין וטוענים רבניים רשומים ({lawyers.length})</h3>
+            {lawyers.length === 0 ? <div className={styles.empty}>אין עו"ד/טוענים רשומים</div> : (
+              <div className={`card ${styles.tableCard}`}>
+                <div className={styles.tableWrap}>
+                  <table className="data-table">
+                    <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th><th>רישיון</th><th>פעיל</th><th></th></tr></thead>
+                    <tbody>
+                      {lawyers.map(l => (
+                        <tr key={l.id}>
+                          <td><strong>{l.name}</strong></td>
+                          <td style={{ direction: 'ltr', textAlign: 'right' }}>{l.email}</td>
+                          <td>{l.role === 'toen' ? 'טוען רבני' : 'עורך דין'}</td>
+                          <td>{l.license_number || '—'}</td>
+                          <td><span className={`badge ${l.is_active ? 'badge-open' : 'badge-closed'}`}>{l.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
+                          <td><button className={styles.delBtn} onClick={() => handleDeleteLawyer(l.id)}><Trash2 size={13} /></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
