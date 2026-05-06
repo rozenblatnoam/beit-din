@@ -155,8 +155,8 @@ export default function Dashboard() {
           <div className={`card ${styles.sideWidget}`}>
             <div className={styles.widgetTitle}>📞 יצירת קשר</div>
             <div className={styles.contactList}>
-              <div>📞 03-000-0000</div>
-              <div>📧 info@karmei-mishpat.co.il</div>
+              <div>📞 052-946-70-71</div>
+              <div>📧 karmeimishpat@gmail.com</div>
               <div>🕘 א׳-ה׳ 09:00–18:00</div>
             </div>
             <button className="btn-sm" style={{ width: '100%', marginTop: '12px', justifyContent: 'center' }}>

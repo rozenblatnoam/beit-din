@@ -116,13 +116,13 @@ export default function Payment() {
 
             {method === 'bit' && (
               <div className="alert alert-info" style={{ marginTop: '1rem' }}>
-                <span>שלחו תשלום לטלפון: 050-123-4567 עם הערה: מספר התיק שלך</span>
+                <span>שלחו תשלום לטלפון: 052-946-70-71 עם הערה: מספר התיק שלך</span>
               </div>
             )}
 
             {method === 'check' && (
               <div className="alert alert-info" style={{ marginTop: '1rem' }}>
-                <span>צרו קשר עם המזכירות לתיאום: 03-000-0000</span>
+                <span>צרו קשר עם המזכירות לתיאום: 052-946-70-71</span>
               </div>
             )}
 
