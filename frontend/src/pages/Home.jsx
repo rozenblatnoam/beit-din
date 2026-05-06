@@ -78,11 +78,11 @@ export default function Home() {
         <div className={styles.infoRow}>
           <div className={styles.infoCard}>
             <div className={styles.infoIcon}>📞</div>
-            <div><strong>טלפון</strong><br />03-000-0000</div>
+            <div><strong>טלפון</strong><br />052-946-70-71</div>
           </div>
           <div className={styles.infoCard}>
             <div className={styles.infoIcon}>📧</div>
-            <div><strong>דוא"ל</strong><br />info@karmei-mishpat.co.il</div>
+            <div><strong>דוא"ל</strong><br />karmeimishpat@gmail.com</div>
           </div>
           <div className={styles.infoCard}>
             <div className={styles.infoIcon}>🕘</div>
@@ -90,7 +90,7 @@ export default function Home() {
           </div>
           <div className={styles.infoCard}>
             <div className={styles.infoIcon}>📍</div>
-            <div><strong>כתובת</strong><br />רחוב הרב מימון 12, ירושלים</div>
+            <div><strong>כתובת</strong><br />רחוב המכבים 5, ענב</div>
           </div>
         </div>
       </div>
