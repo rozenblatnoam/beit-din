@@ -31,7 +31,7 @@ function fileIcon(type) {
   if (['jpg','jpeg','png','gif','webp'].includes(type)) return '🖼️';
   if (type === 'pdf') return '📋';
   if (['doc','docx'].includes(type)) return '📝';
-  if (['mp3','wav','aac','ogg','m4a'].includes(type)) return '🎵';
+  if (['mp3','wav','aac','ogg','m4a','amr'].includes(type)) return '🎵';
   if (['mp4','webm','mov','avi'].includes(type)) return '🎬';
   return '📄';
 }
@@ -151,7 +151,7 @@ export default function CaseDetail() {
               <span className={styles.sectionTitle}><FileText size={16} /> מסמכים</span>
               <label className="btn-sm" style={{ cursor: 'pointer' }}>
                 {uploading ? <Loader size={13} /> : <><Upload size={13} /> העלאה</>}
-                <input type="file" hidden accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.aac,.ogg,.m4a,.mp4,.webm,.mov,.avi" onChange={handleUpload} disabled={uploading} />
+                <input type="file" hidden accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.aac,.ogg,.m4a,.amr,.mp4,.webm,.mov,.avi" onChange={handleUpload} disabled={uploading} />
               </label>
             </div>
             {uploadError && <div className="alert alert-warning" style={{ margin: '0.5rem 0' }}>{uploadError}</div>}

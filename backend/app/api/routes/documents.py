@@ -22,7 +22,7 @@ ALLOWED_TYPES = {
     "image/jpeg", "image/png", "image/gif", "image/webp",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm", "audio/aac",
+    "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm", "audio/aac", "audio/amr", "audio/amr-wb",
     "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo",
 }
 MAX_SIZE_MB = 200

@@ -7,7 +7,7 @@ import styles from './Documents.module.css';
 const TYPE_ICONS = {
   pdf: '📄', docx: '📝', doc: '📝',
   png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', webp: '🖼️',
-  mp3: '🎵', wav: '🎵', aac: '🎵', ogg: '🎵', m4a: '🎵',
+  mp3: '🎵', wav: '🎵', aac: '🎵', ogg: '🎵', m4a: '🎵', amr: '🎵',
   mp4: '🎬', webm: '🎬', mov: '🎬', avi: '🎬',
   default: '📁',
 };
@@ -83,7 +83,7 @@ export default function Documents() {
             {uploading ? 'מעלה...' : 'העלאת מסמך'}
           </button>
           <input ref={fileRef} type="file" style={{ display: 'none' }}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.aac,.ogg,.m4a,.mp4,.webm,.mov,.avi" onChange={handleUpload} />
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.aac,.ogg,.m4a,.amr,.mp4,.webm,.mov,.avi" onChange={handleUpload} />
         </div>
       </div>
 
