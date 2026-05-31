@@ -4,7 +4,13 @@ import { Upload, Filter, Download, Eye, Trash2, Loader } from 'lucide-react';
 import DocViewer from '../components/DocViewer';
 import styles from './Documents.module.css';
 
-const TYPE_ICONS = { pdf: '📄', docx: '📝', doc: '📝', img: '🖼', png: '🖼', jpg: '🖼', jpeg: '🖼', default: '📁' };
+const TYPE_ICONS = {
+  pdf: '📄', docx: '📝', doc: '📝',
+  png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', webp: '🖼️',
+  mp3: '🎵', wav: '🎵', aac: '🎵', ogg: '🎵', m4a: '🎵',
+  mp4: '🎬', webm: '🎬', mov: '🎬', avi: '🎬',
+  default: '📁',
+};
 
 function formatSize(bytes) {
   if (!bytes) return '—';
@@ -77,7 +83,7 @@ export default function Documents() {
             {uploading ? 'מעלה...' : 'העלאת מסמך'}
           </button>
           <input ref={fileRef} type="file" style={{ display: 'none' }}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={handleUpload} />
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.mp3,.wav,.aac,.ogg,.m4a,.mp4,.webm,.mov,.avi" onChange={handleUpload} />
         </div>
       </div>
 

@@ -17,9 +17,15 @@ from app.services import notifications as notif_service
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
-ALLOWED_TYPES = {"application/pdf", "image/jpeg", "image/png", "application/msword",
-                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
-MAX_SIZE_MB = 20
+ALLOWED_TYPES = {
+    "application/pdf",
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm", "audio/aac",
+    "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo",
+}
+MAX_SIZE_MB = 200
 
 # Local upload directory (relative to where uvicorn runs → /opt/dinlink/backend/uploads in prod)
 UPLOADS_DIR = Path(os.getenv("UPLOADS_DIR", "uploads"))
