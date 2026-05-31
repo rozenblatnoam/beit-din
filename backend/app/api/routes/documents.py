@@ -22,8 +22,17 @@ ALLOWED_TYPES = {
     "image/jpeg", "image/png", "image/gif", "image/webp",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm", "audio/aac", "audio/amr", "audio/amr-wb",
+    "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm", "audio/aac",
+    "audio/amr", "audio/amr-wb", "audio/x-amr",
     "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo",
+    "application/octet-stream",  # fallback — validated by extension below
+}
+
+ALLOWED_EXTENSIONS = {
+    "pdf", "doc", "docx",
+    "jpg", "jpeg", "png", "gif", "webp",
+    "mp3", "wav", "aac", "ogg", "m4a", "amr",
+    "mp4", "webm", "mov", "avi",
 }
 MAX_SIZE_MB = 200
 
@@ -59,15 +68,14 @@ def upload_document(
     if not case:
         raise HTTPException(status_code=404, detail="תיק לא נמצא")
 
-    if file.content_type not in ALLOWED_TYPES:
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if file.content_type not in ALLOWED_TYPES and ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="סוג קובץ לא נתמך")
 
     content = file.file.read()
     if len(content) > MAX_SIZE_MB * 1024 * 1024:
         raise HTTPException(status_code=400, detail=f"הקובץ גדול מ-{MAX_SIZE_MB}MB")
     file.file.seek(0)
-
-    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
 
     if google_drive.is_configured():
         drive_data = google_drive.upload_file(file, case.case_number)
