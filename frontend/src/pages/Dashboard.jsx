@@ -91,8 +91,11 @@ export default function Dashboard() {
                   </thead>
                   <tbody>
                     {cases.map(c => (
-                      <tr key={c.id}>
-                        <td><strong>{c.case_number}</strong></td>
+                      <tr key={c.id} onClick={() => navigate(`/case/${c.id}`)}
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+                        onMouseLeave={e => e.currentTarget.style.background = ''}>
+                        <td><strong style={{ color: 'var(--gold)' }}>{c.case_number}</strong></td>
                         <td>{c.subject}</td>
                         <td style={{ whiteSpace: 'nowrap' }}>{formatDate(c.opened_at)}</td>
                         <td>
@@ -102,10 +105,7 @@ export default function Dashboard() {
                         </td>
                         <td>{formatAmount(c.amount)}</td>
                         <td>
-                          <button className="btn-ghost" style={{ fontSize: '12px', color: 'var(--gold)' }}
-                            onClick={() => navigate('/documents')}>
-                            {c.status === 'closed' ? 'פסק דין' : 'מסמכים'}
-                          </button>
+                          <span style={{ fontSize: '12px', color: 'var(--gold)' }}>← פתח תיק</span>
                         </td>
                       </tr>
                     ))}
