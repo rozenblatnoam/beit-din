@@ -10,6 +10,12 @@ from app.models.case import Case
 from app.schemas.dayan import DayanCreate, DayanOut, DayanUpdate
 from app.schemas.lawyer import LawyerCreate, LawyerOut, LawyerUpdate
 from app.schemas.case import CaseOut, CaseUpdate
+from app.models.case_event import CaseEvent
+from app.models.document import Document
+from app.models.payment import Payment
+from app.models.schedule import Schedule
+from app.models.protocol import CaseProtocol
+from app.models.notification import Notification
 from app.services import email as email_service
 from app.services import events as events_service
 from app.services import notifications as notif_service
@@ -189,6 +195,21 @@ def update_case(case_id: int, body: CaseUpdate, db: Session = Depends(get_db), a
             )
 
     return case
+
+
+@router.delete("/cases/{case_id}", status_code=204)
+def delete_case(case_id: int, db: Session = Depends(get_db), _=Depends(require_admin)):
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="תיק לא נמצא")
+    db.query(Notification).filter(Notification.related_case_id == case_id).update({"related_case_id": None})
+    db.query(CaseEvent).filter(CaseEvent.case_id == case_id).delete()
+    db.query(Schedule).filter(Schedule.case_id == case_id).delete()
+    db.query(CaseProtocol).filter(CaseProtocol.case_id == case_id).delete()
+    db.query(Payment).filter(Payment.case_id == case_id).delete()
+    db.query(Document).filter(Document.case_id == case_id).delete()
+    db.delete(case)
+    db.commit()
 
 
 # ─── Users ─────────────────────────────────────────────

@@ -136,6 +136,14 @@ export default function AdminScheduler() {
   const getDayan = (id) => dayans.find(d => d.id === id);
   const getCase = (id) => cases.find(c => c.id === id);
 
+  const handleDeleteCase = async (caseId, caseNumber) => {
+    if (!confirm(`האם למחוק את תיק ${caseNumber}? פעולה זו תמחק את כל המסמכים, הישיבות והתשלומים הקשורים ולא ניתנת לביטול.`)) return;
+    try {
+      await api.delete(`/admin/cases/${caseId}`);
+      refreshCases && refreshCases();
+    } catch (e) { alert('שגיאה במחיקת תיק: ' + (e?.detail || 'נסה שנית')); }
+  };
+
   const handleCreateDayan = async () => {
     if (!newDayan.email || !newDayan.name || !newDayan.password) return;
     setManageLoading('dayan'); setManageMsg('');
@@ -257,6 +265,9 @@ export default function AdminScheduler() {
                         </select>
                         <ChevronDown size={13} className={styles.selectArrow} />
                       </div>
+                      <button className={styles.delBtn} title="מחק תיק" onClick={() => handleDeleteCase(c.id, c.case_number)} style={{ marginRight: '8px' }}>
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -273,7 +284,7 @@ export default function AdminScheduler() {
               <div className={styles.tableWrap}>
                 <table className="data-table">
                   <thead>
-                    <tr><th>תיק</th><th>נושא</th><th>סטטוס</th><th>דיין משובץ</th><th>שינוי שיבוץ</th></tr>
+                    <tr><th>תיק</th><th>נושא</th><th>סטטוס</th><th>דיין משובץ</th><th>שינוי שיבוץ</th><th></th></tr>
                   </thead>
                   <tbody>
                     {assignedCases.map(c => {
@@ -292,6 +303,11 @@ export default function AdminScheduler() {
                               </select>
                               <ChevronDown size={13} className={styles.selectArrow} />
                             </div>
+                          </td>
+                          <td>
+                            <button className={styles.delBtn} title="מחק תיק" onClick={() => handleDeleteCase(c.id, c.case_number)}>
+                              <Trash2 size={13} />
+                            </button>
                           </td>
                         </tr>
                       );
