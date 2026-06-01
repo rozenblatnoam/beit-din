@@ -39,12 +39,14 @@ export default function NewCase() {
     setError('');
     setLoading(true);
     try {
-      const subject = form.respondentName
-        ? `${form.caseType} — ${form.respondentName}`
-        : form.caseType;
+      const claimant = form.claimantName || user?.name || 'תובע';
+      const respondent = form.respondentName || 'נתבע';
+      const subject = `${claimant} נ' ${respondent}`;
       const description = [
+        form.caseType ? `סוג סכסוך: ${form.caseType}` : '',
         form.description,
-        form.respondentName ? `נתבע: ${form.respondentName}` : '',
+        form.respondentPhone ? `טלפון נתבע: ${form.respondentPhone}` : '',
+        form.respondentEmail ? `מייל נתבע: ${form.respondentEmail}` : '',
         form.relief ? `סעד מבוקש: ${form.relief}` : '',
       ].filter(Boolean).join('\n');
 
