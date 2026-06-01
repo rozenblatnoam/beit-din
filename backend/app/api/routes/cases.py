@@ -16,8 +16,21 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 
 def _generate_case_number(db: Session) -> str:
     year = datetime.now(timezone.utc).year
-    count = db.query(Case).filter(Case.case_number.like(f"{year}-%")).count()
-    return f"{year}-{count + 1:03d}"
+    prefix = f"{year}-"
+    last = (
+        db.query(Case.case_number)
+        .filter(Case.case_number.like(f"{prefix}%"))
+        .order_by(Case.case_number.desc())
+        .first()
+    )
+    if last:
+        try:
+            num = int(last[0].replace(prefix, "")) + 1
+        except ValueError:
+            num = 1
+    else:
+        num = 1
+    return f"{year}-{num:03d}"
 
 
 @router.post("/", response_model=CaseOut, status_code=status.HTTP_201_CREATED)
