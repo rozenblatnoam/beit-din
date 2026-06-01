@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, UserCheck, Calendar, Plus, Trash2, CalendarPlus, ChevronDown, Loader, Users, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, UserCheck, Calendar, Plus, Trash2, CalendarPlus, ChevronDown, Loader, Users, Eye, EyeOff, Edit2, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { api } from '../api/client';
 import styles from './AdminScheduler.module.css';
@@ -42,6 +42,42 @@ export default function AdminScheduler() {
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [dateWarning, setDateWarning] = useState('');
   const [scheduleError, setScheduleError] = useState('');
+
+  const [editCase, setEditCase] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const openEdit = (c) => {
+    setEditCase(c);
+    setEditForm({
+      subject: c.subject || '',
+      description: c.description || '',
+      status: c.status || 'open',
+      amount: c.amount || '',
+      next_hearing: c.next_hearing ? c.next_hearing.slice(0, 16) : '',
+      lawyer_id: c.lawyer_id || '',
+    });
+    setEditError('');
+  };
+
+  const handleSaveEdit = async () => {
+    setEditLoading(true); setEditError('');
+    try {
+      const body = {
+        subject: editForm.subject || undefined,
+        description: editForm.description || undefined,
+        status: editForm.status || undefined,
+        amount: editForm.amount ? Number(editForm.amount) : undefined,
+        next_hearing: editForm.next_hearing ? editForm.next_hearing + ':00' : undefined,
+        lawyer_id: editForm.lawyer_id ? Number(editForm.lawyer_id) : undefined,
+      };
+      await api.patch(`/admin/cases/${editCase.id}`, body);
+      refreshCases && refreshCases();
+      setEditCase(null);
+    } catch (e) { setEditError(e?.detail || 'שגיאה בשמירה'); }
+    finally { setEditLoading(false); }
+  };
 
   const emptyDayan = { email: '', name: '', short_name: '', specialty: '', password: '' };
   const emptyLawyer = { email: '', name: '', short_name: '', role: 'lawyer', license_number: '', password: '' };
@@ -265,6 +301,9 @@ export default function AdminScheduler() {
                         </select>
                         <ChevronDown size={13} className={styles.selectArrow} />
                       </div>
+                      <button className={styles.delBtn} title="ערוך תיק" onClick={() => openEdit(c)} style={{ marginRight: '4px', color: 'var(--gold)' }}>
+                        <Edit2 size={13} />
+                      </button>
                       <button className={styles.delBtn} title="מחק תיק" onClick={() => handleDeleteCase(c.id, c.case_number)} style={{ marginRight: '8px' }}>
                         <Trash2 size={13} />
                       </button>
@@ -304,7 +343,10 @@ export default function AdminScheduler() {
                               <ChevronDown size={13} className={styles.selectArrow} />
                             </div>
                           </td>
-                          <td>
+                          <td style={{ display: 'flex', gap: '4px' }}>
+                            <button className={styles.delBtn} title="ערוך תיק" onClick={() => openEdit(c)} style={{ color: 'var(--gold)' }}>
+                              <Edit2 size={13} />
+                            </button>
                             <button className={styles.delBtn} title="מחק תיק" onClick={() => handleDeleteCase(c.id, c.case_number)}>
                               <Trash2 size={13} />
                             </button>
@@ -626,6 +668,84 @@ export default function AdminScheduler() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+    </div>
+      {/* EDIT CASE MODAL */}
+      {editCase && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>
+                <Edit2 size={15} style={{ marginLeft: '6px', color: 'var(--gold)' }} />
+                עריכת תיק {editCase.case_number}
+              </h3>
+              <button onClick={() => setEditCase(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.formGrid}>
+              <div className={styles.formField} style={{ gridColumn: '1/-1' }}>
+                <label>נושא התיק *</label>
+                <input className={styles.input} value={editForm.subject}
+                  onChange={e => setEditForm(p => ({ ...p, subject: e.target.value }))} />
+              </div>
+              <div className={styles.formField} style={{ gridColumn: '1/-1' }}>
+                <label>תיאור</label>
+                <textarea className={styles.input} rows={3} value={editForm.description}
+                  onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                  style={{ resize: 'vertical' }} />
+              </div>
+              <div className={styles.formField}>
+                <label>סטטוס</label>
+                <div className={styles.selectWrap}>
+                  <select className={styles.select} value={editForm.status}
+                    onChange={e => setEditForm(p => ({ ...p, status: e.target.value }))}>
+                    <option value="open">פעיל</option>
+                    <option value="pending">ממתין לתגובה</option>
+                    <option value="docs">השלמת מסמכים</option>
+                    <option value="closed">נסגר</option>
+                  </select>
+                  <ChevronDown size={13} className={styles.selectArrow} />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label>סכום תביעה (₪)</label>
+                <input type="number" className={styles.input} value={editForm.amount}
+                  onChange={e => setEditForm(p => ({ ...p, amount: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>מועד דיון קרוב</label>
+                <input type="datetime-local" className={styles.input} value={editForm.next_hearing}
+                  onChange={e => setEditForm(p => ({ ...p, next_hearing: e.target.value }))} />
+              </div>
+              <div className={styles.formField}>
+                <label>עו"ד / טוען רבני</label>
+                <div className={styles.selectWrap}>
+                  <select className={styles.select} value={editForm.lawyer_id}
+                    onChange={e => setEditForm(p => ({ ...p, lawyer_id: e.target.value }))}>
+                    <option value="">ללא</option>
+                    {lawyers.map(l => <option key={l.id} value={l.id}>{l.name} ({l.role === 'toen' ? 'טוען' : 'עו"ד'})</option>)}
+                  </select>
+                  <ChevronDown size={13} className={styles.selectArrow} />
+                </div>
+              </div>
+            </div>
+
+            {editError && (
+              <div style={{ background: '#fee', border: '1px solid #fcc', color: '#c33', borderRadius: '8px', padding: '0.6rem 0.9rem', margin: '0.75rem 0', fontSize: '13px' }}>
+                {editError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+              <button className="btn-outline" onClick={() => setEditCase(null)}>ביטול</button>
+              <button className={styles.addBtn} onClick={handleSaveEdit} disabled={editLoading} style={{ margin: 0 }}>
+                {editLoading ? <Loader size={14} /> : 'שמור שינויים'}
+              </button>
+            </div>
           </div>
         </div>
       )}
