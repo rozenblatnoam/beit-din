@@ -671,7 +671,6 @@ export default function AdminScheduler() {
           </div>
         </div>
       )}
-    </div>
       {/* EDIT CASE MODAL */}
       {editCase && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
