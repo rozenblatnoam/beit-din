@@ -29,6 +29,41 @@ function toISODateTime(date, time) {
   return `${date}T${time}:00`;
 }
 
+function PanelSelect({ caseObj, dayans, onSave }) {
+  const [avbd, setAvbd] = useState(String(caseObj.dayan_id  || ''));
+  const [d2,   setD2]   = useState(String(caseObj.dayan2_id || ''));
+  const [d3,   setD3]   = useState(String(caseObj.dayan3_id || ''));
+  const [saved, setSaved] = useState(false);
+
+  const save = () => {
+    onSave(caseObj.id, avbd, d2, d3);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const sel = (val, setVal, label) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', minWidth: '36px' }}>{label}</span>
+      <select value={val} onChange={e => setVal(e.target.value)}
+        style={{ fontSize: '12px', padding: '2px 4px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', minWidth: '130px' }}>
+        <option value="">— ללא —</option>
+        {dayans.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+      </select>
+    </div>
+  );
+
+  return (
+    <div style={{ minWidth: '190px' }}>
+      {sel(avbd, setAvbd, 'אב"ד')}
+      {sel(d2,   setD2,   'דיין')}
+      {sel(d3,   setD3,   'דיין')}
+      <button onClick={save} style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '6px', background: saved ? '#4a9b7f' : 'var(--gold)', color: '#fff', border: 'none', cursor: 'pointer', marginTop: '2px' }}>
+        {saved ? '✓ נשמר' : 'שמור הרכב'}
+      </button>
+    </div>
+  );
+}
+
 export default function AdminScheduler() {
   const { isAdmin, cases, schedule, refreshCases, addScheduleItem, removeScheduleItem } = useApp();
   const navigate = useNavigate();
@@ -131,6 +166,17 @@ export default function AdminScheduler() {
 
   const unassignedCases = cases.filter(c => !c.dayan_id && c.status !== 'closed');
   const assignedCases = cases.filter(c => c.dayan_id);
+
+  const handleAssignPanel = async (caseId, avbd, d2, d3) => {
+    try {
+      await api.patch(`/admin/cases/${caseId}`, {
+        dayan_id:  avbd ? Number(avbd) : undefined,
+        dayan2_id: d2   ? Number(d2)   : undefined,
+        dayan3_id: d3   ? Number(d3)   : undefined,
+      });
+      refreshCases && refreshCases();
+    } catch (e) { console.error('שגיאה בשיבוץ הרכב', e); }
+  };
 
   const handleAssign = async (caseId, dayanId) => {
     if (!dayanId) return;
@@ -291,16 +337,7 @@ export default function AdminScheduler() {
                       <span className={styles.amount}>{formatAmount(c.amount)}</span>
                     </div>
                     <div className={styles.assignControl}>
-                      <div className={styles.selectWrap}>
-                        <select className={styles.select} defaultValue=""
-                          onChange={e => handleAssign(c.id, e.target.value)}>
-                          <option value="" disabled>בחר דיין...</option>
-                          {dayans.map(d => (
-                            <option key={d.id} value={d.id}>{d.name} — {d.specialty}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={13} className={styles.selectArrow} />
-                      </div>
+                      <PanelSelect caseObj={c} dayans={dayans} onSave={handleAssignPanel} />
                       <button className={styles.delBtn} title="ערוך תיק" onClick={() => openEdit(c)} style={{ marginRight: '4px', color: 'var(--gold)' }}>
                         <Edit2 size={13} />
                       </button>
@@ -323,26 +360,26 @@ export default function AdminScheduler() {
               <div className={styles.tableWrap}>
                 <table className="data-table">
                   <thead>
-                    <tr><th>תיק</th><th>נושא</th><th>סטטוס</th><th>דיין משובץ</th><th>שינוי שיבוץ</th><th></th></tr>
+                    <tr><th>תיק</th><th>נושא</th><th>סטטוס</th><th>הרכב</th><th>שינוי הרכב</th><th></th></tr>
                   </thead>
                   <tbody>
                     {assignedCases.map(c => {
-                      const dayan = getDayan(c.dayan_id);
+                      const avbd  = getDayan(c.dayan_id);
+                      const d2    = getDayan(c.dayan2_id);
+                      const d3    = getDayan(c.dayan3_id);
                       return (
                         <tr key={c.id}>
                           <td><strong>{c.case_number}</strong></td>
                           <td>{c.subject}</td>
                           <td><span className={`badge ${statusMap[c.status]?.cls}`}>{statusMap[c.status]?.label}</span></td>
-                          <td><span className={styles.dayanChip}>{dayan?.avatar} {dayan?.name || `#${c.dayan_id}`}</span></td>
                           <td>
-                            <div className={styles.selectWrap} style={{ minWidth: '160px' }}>
-                              <select className={styles.select} value={c.dayan_id || ''}
-                                onChange={e => handleAssign(c.id, e.target.value)}>
-                                {dayans.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                              </select>
-                              <ChevronDown size={13} className={styles.selectArrow} />
+                            <div style={{ fontSize: '12px', lineHeight: '1.7' }}>
+                              {avbd && <div><strong>אב"ד:</strong> {avbd.name}</div>}
+                              {d2   && <div><strong>דיין:</strong> {d2.name}</div>}
+                              {d3   && <div><strong>דיין:</strong> {d3.name}</div>}
                             </div>
                           </td>
+                          <td><PanelSelect caseObj={c} dayans={dayans} onSave={handleAssignPanel} /></td>
                           <td style={{ display: 'flex', gap: '4px' }}>
                             <button className={styles.delBtn} title="ערוך תיק" onClick={() => openEdit(c)} style={{ color: 'var(--gold)' }}>
                               <Edit2 size={13} />

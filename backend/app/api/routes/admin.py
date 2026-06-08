@@ -130,7 +130,9 @@ def update_case(case_id: int, body: CaseUpdate, db: Session = Depends(get_db), a
     if not case:
         raise HTTPException(status_code=404, detail="תיק לא נמצא")
 
-    prev_dayan_id = case.dayan_id
+    prev_dayan_id  = case.dayan_id
+    prev_dayan2_id = case.dayan2_id
+    prev_dayan3_id = case.dayan3_id
     prev_lawyer_id = case.lawyer_id
     prev_status = case.status
     for field, value in body.model_dump(exclude_none=True).items():
@@ -140,25 +142,31 @@ def update_case(case_id: int, body: CaseUpdate, db: Session = Depends(get_db), a
 
     user = db.query(User).filter(User.id == case.user_id).first()
 
-    if body.dayan_id and body.dayan_id != prev_dayan_id:
-        dayan = db.query(Dayan).filter(Dayan.id == body.dayan_id).first()
-        if dayan and user:
-            email_service.send_dayan_assigned(user.email, user.name, case.case_number, dayan.name)
-            events_service.add_event(
-                db, case.id, "dayan_assigned",
-                title=f"שובץ דיין", description=f"הדיין {dayan.name} שובץ לתיק.",
-                actor_type="admin", actor_id=admin.id,
-            )
-            notif_service.notify_user(
-                db, user.id,
-                title="שובץ דיין לתיק", body=f"הדיין {dayan.name} שובץ לתיק {case.case_number}.",
-                link="/dashboard", case_id=case.id,
-            )
-            notif_service.notify_dayan(
-                db, dayan.id,
-                title="שובצת לתיק חדש", body=f"שובצת לתיק {case.case_number} - {case.subject}.",
-                link="/dayan/portal", case_id=case.id,
-            )
+    # Notify each newly assigned dayan
+    for new_id, prev_id, role_label in [
+        (body.dayan_id,  prev_dayan_id,  'אב"ד'),
+        (body.dayan2_id, prev_dayan2_id, 'דיין'),
+        (body.dayan3_id, prev_dayan3_id, 'דיין'),
+    ]:
+        if new_id and new_id != prev_id:
+            dayan = db.query(Dayan).filter(Dayan.id == new_id).first()
+            if dayan and user:
+                email_service.send_dayan_assigned(user.email, user.name, case.case_number, dayan.name)
+                events_service.add_event(
+                    db, case.id, "dayan_assigned",
+                    title=f"שובץ {role_label}", description=f"{role_label} {dayan.name} שובץ לתיק.",
+                    actor_type="admin", actor_id=admin.id,
+                )
+                notif_service.notify_user(
+                    db, user.id,
+                    title=f"שובץ {role_label} לתיק", body=f"{role_label} {dayan.name} שובץ לתיק {case.case_number}.",
+                    link="/dashboard", case_id=case.id,
+                )
+                notif_service.notify_dayan(
+                    db, dayan.id,
+                    title="שובצת לתיק חדש", body=f"שובצת כ{role_label} לתיק {case.case_number} - {case.subject}.",
+                    link="/dayan/portal", case_id=case.id,
+                )
 
     if body.lawyer_id and body.lawyer_id != prev_lawyer_id:
         lawyer = db.query(Lawyer).filter(Lawyer.id == body.lawyer_id).first()

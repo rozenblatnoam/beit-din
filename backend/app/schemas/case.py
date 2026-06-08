@@ -15,6 +15,8 @@ class CaseUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[CaseStatus] = None
     dayan_id: Optional[int] = None
+    dayan2_id: Optional[int] = None
+    dayan3_id: Optional[int] = None
     lawyer_id: Optional[int] = None
     amount: Optional[float] = None
     next_hearing: Optional[datetime] = None
@@ -30,6 +32,8 @@ class CaseOut(BaseModel):
     status: CaseStatus
     user_id: int
     dayan_id: Optional[int]
+    dayan2_id: Optional[int]
+    dayan3_id: Optional[int]
     lawyer_id: Optional[int]
     amount: Optional[float]
     next_hearing: Optional[datetime]
